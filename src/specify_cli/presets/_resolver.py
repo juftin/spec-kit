@@ -950,3 +950,17 @@ class PresetResolver:
                 content = top_frontmatter_text + "\n\n" + content
 
         return content
+
+    def resolve_template(self, template_name: str) -> Optional[str]:
+        """Resolve a template name and return composed markdown content.
+
+        Walks the priority stack (overrides -> presets -> extensions -> core_pack).
+        Convenience wrapper around resolve_content(template_name, template_type="template").
+        """
+        if template_name.endswith(".md"):
+            template_name = template_name[:-3]
+        content = self.resolve_content(template_name, template_type="template")
+        if content is None and not template_name.endswith("-template"):
+            content = self.resolve_content(f"{template_name}-template", template_type="template")
+        return content
+

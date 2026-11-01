@@ -79,6 +79,8 @@ This example uses GitHub Copilot.
 ```bash
 uv tool install specify-cli
 specify init my-project --integration copilot
+# Or for a clean repo with zero copied scripts/templates:
+# specify init my-project --bare --integration copilot
 cd my-project
 ```
 

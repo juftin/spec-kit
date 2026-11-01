@@ -85,6 +85,27 @@ supported agent, replace `copilot` with its
 [Command Invocation](integrations/cli.md#command-invocation) for the
 syntax used by each agent and mode.
 
+### Clean Repository & Zero-Footprint Initialization
+
+To use Spec Kit in an existing or new project without copying internal shell scripts, raw templates, or workflows into your repository, pass `--bare` (or `--zero-footprint`):
+
+```bash
+specify init . --bare --integration copilot
+```
+
+In bare mode:
+- No `.specify/scripts/` or `.specify/templates/` are copied to your project.
+- Spec Kit commands resolve bundled templates in memory directly from the installed package.
+- Your project tree stays completely clean, with specifications organized under `docs/specs/`.
+
+### Global Agent Skills
+
+To install agent skills globally across all projects on your workstation without adding agent configuration files to individual repositories:
+
+```bash
+specify integration install claude --global
+```
+
 ### Specify Script Type (Shell, PowerShell, or Python)
 
 Automation scripts are available as Bash (`.sh`), PowerShell (`.ps1`), and Python (`.py`) variants.

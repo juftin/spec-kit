@@ -12,6 +12,7 @@ scripts:
   sh: scripts/bash/resolve-template.sh spec-template --json
   ps: scripts/powershell/resolve-template.ps1 spec-template -Json
   py: scripts/python/resolve_template.py spec-template --json
+  cli: specify template spec-template --json
 ---
 
 ## User Input

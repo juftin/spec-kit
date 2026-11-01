@@ -356,6 +356,12 @@ def register(app: typer.Typer) -> None:
             False, "--trust-integration",
             help="Authorize executing a reviewed external integration package without prompting.",
         ),
+        bare: bool = typer.Option(
+            False,
+            "--bare",
+            "--zero-footprint",
+            help="Initialize project without copying internal scripts, templates, or workflows into the repository.",
+        ),
     ):
         """
         Initialize a new Specify project.
@@ -722,6 +728,26 @@ def register(app: typer.Typer) -> None:
                     if extra:
                         integration_parsed_options.update(extra)
 
+                init_opts = {
+                    **previous_init_options,
+                    "ai": selected_ai,
+                    "integration": resolved_integration.key,
+                    "here": here,
+                    "script": selected_script,
+                    "feature_numbering": previous_init_options.get("feature_numbering", "sequential"),
+                    "speckit_version": get_speckit_version(),
+                    "allow_symlinks": allow_symlinks,
+                }
+                if resolved_integration.is_skills_mode(
+                    integration_parsed_options or None, project_root=project_path
+                ):
+                    init_opts["ai_skills"] = True
+                else:
+                    init_opts.pop("ai_skills", None)
+                if bare:
+                    init_opts["footprint"] = "bare"
+                save_init_options(project_path, init_opts)
+
                 from .events import resolve_events
                 events_map = resolve_events(
                     resolved_integration.key,
@@ -736,6 +762,7 @@ def register(app: typer.Typer) -> None:
                     script_type=selected_script,
                     raw_options=integration_options,
                     events=events_map,
+                    bare=bare,
                 )
                 manifest.save()
 
@@ -810,53 +837,62 @@ def register(app: typer.Typer) -> None:
                         integration_parsed_options,
                         project_path,
                     ),
+                    bare=bare,
                 )
-                tracker.complete(
-                    "shared-infra", f"scripts ({selected_script}) + templates"
-                )
+                if bare:
+                    tracker.complete(
+                        "shared-infra", "bare (in-memory templates & scripts)"
+                    )
+                else:
+                    tracker.complete(
+                        "shared-infra", f"scripts ({selected_script}) + templates"
+                    )
 
-                try:
-                    bundled_wf = _locate_bundled_workflow("speckit")
-                    if bundled_wf:
-                        from .workflows.catalog import WorkflowRegistry
-                        from .workflows.engine import WorkflowDefinition
+                if bare:
+                    tracker.skip("workflow", "skipped in bare mode")
+                else:
+                    try:
+                        bundled_wf = _locate_bundled_workflow("speckit")
+                        if bundled_wf:
+                            from .workflows.catalog import WorkflowRegistry
+                            from .workflows.engine import WorkflowDefinition
 
-                        wf_registry = WorkflowRegistry(project_path)
-                        if wf_registry.is_installed("speckit"):
-                            tracker.complete("workflow", "already installed")
+                            wf_registry = WorkflowRegistry(project_path)
+                            if wf_registry.is_installed("speckit"):
+                                tracker.complete("workflow", "already installed")
+                            else:
+                                import shutil as _shutil
+
+                                dest_wf = (
+                                    project_path / ".specify" / "workflows" / "speckit"
+                                )
+                                dest_wf.mkdir(parents=True, exist_ok=True)
+                                from .integrations._file_changes import after_file_change, before_file_change
+
+                                before_file_change(dest_wf / "workflow.yml")
+                                _shutil.copy2(
+                                    bundled_wf / "workflow.yml",
+                                    dest_wf / "workflow.yml",
+                                )
+                                after_file_change(dest_wf / "workflow.yml")
+                                definition = WorkflowDefinition.from_yaml(
+                                    dest_wf / "workflow.yml"
+                                )
+                                wf_registry.add(
+                                    "speckit",
+                                    {
+                                        "name": definition.name,
+                                        "version": definition.version,
+                                        "description": definition.description,
+                                        "source": "bundled",
+                                    },
+                                )
+                                tracker.complete("workflow", "speckit installed")
                         else:
-                            import shutil as _shutil
-
-                            dest_wf = (
-                                project_path / ".specify" / "workflows" / "speckit"
-                            )
-                            dest_wf.mkdir(parents=True, exist_ok=True)
-                            from .integrations._file_changes import after_file_change, before_file_change
-
-                            before_file_change(dest_wf / "workflow.yml")
-                            _shutil.copy2(
-                                bundled_wf / "workflow.yml",
-                                dest_wf / "workflow.yml",
-                            )
-                            after_file_change(dest_wf / "workflow.yml")
-                            definition = WorkflowDefinition.from_yaml(
-                                dest_wf / "workflow.yml"
-                            )
-                            wf_registry.add(
-                                "speckit",
-                                {
-                                    "name": definition.name,
-                                    "version": definition.version,
-                                    "description": definition.description,
-                                    "source": "bundled",
-                                },
-                            )
-                            tracker.complete("workflow", "speckit installed")
-                    else:
-                        tracker.skip("workflow", "bundled workflow not found")
-                except Exception as wf_err:
-                    sanitized_wf = str(wf_err).replace("\n", " ").strip()
-                    tracker.error("workflow", f"install failed: {sanitized_wf[:120]}")
+                            tracker.skip("workflow", "bundled workflow not found")
+                    except Exception as wf_err:
+                        sanitized_wf = str(wf_err).replace("\n", " ").strip()
+                        tracker.error("workflow", f"install failed: {sanitized_wf[:120]}")
 
                 init_opts = {
                     **previous_init_options,
@@ -874,9 +910,14 @@ def register(app: typer.Typer) -> None:
                     init_opts["ai_skills"] = True
                 else:
                     init_opts.pop("ai_skills", None)
+                if bare:
+                    init_opts["footprint"] = "bare"
                 save_init_options(project_path, init_opts)
 
-                ensure_executable_scripts(project_path, tracker=tracker)
+                if bare:
+                    tracker.skip("chmod", "skipped in bare mode")
+                else:
+                    ensure_executable_scripts(project_path, tracker=tracker)
 
                 if preset:
                     try:

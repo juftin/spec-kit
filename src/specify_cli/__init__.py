@@ -140,6 +140,7 @@ def _install_shared_infra(
     invoke_prefix: str = "/",
     refresh_managed: bool = False,
     refresh_hint: str | None = None,
+    bare: bool = False,
 ) -> bool:
     """Install shared infrastructure files into *project_path*.
 
@@ -184,6 +185,8 @@ def _install_shared_infra(
         invoke_prefix=invoke_prefix,
         refresh_managed=refresh_managed,
         refresh_hint=refresh_hint,
+        bare=bare,
+        tracker=tracker,
     )
 
 
@@ -196,6 +199,7 @@ def _install_shared_infra_or_exit(
     invoke_prefix: str = "/",
     refresh_managed: bool = False,
     refresh_hint: str | None = None,
+    bare: bool = False,
 ) -> bool:
     try:
         return _install_shared_infra(
@@ -207,8 +211,11 @@ def _install_shared_infra_or_exit(
             invoke_prefix=invoke_prefix,
             refresh_managed=refresh_managed,
             refresh_hint=refresh_hint,
+            bare=bare,
         )
     except (ValueError, OSError) as exc:
+        if tracker:
+            tracker.error("shared-infra", str(exc))
         console.print(f"[red]Error:[/red] Failed to install shared infrastructure: {exc}")
         raise typer.Exit(1)
 
@@ -394,11 +401,17 @@ from . import command_check as _command_check  # noqa: E402
 from . import command_init as _command_init  # noqa: E402
 from . import command_mcp as _command_mcp  # noqa: E402
 from . import command_version as _command_version  # noqa: E402
+from . import command_template as _command_template  # noqa: E402
+from . import command_feature as _command_feature  # noqa: E402
+from . import command_sdd as _command_sdd  # noqa: E402
 
 _command_init.register(app)
 _command_check.register(app)
 _command_version.register(app)
 _command_mcp.register(app)
+_command_template.register(app)
+_command_feature.register(app)
+_command_sdd.register(app)
 
 # Preserve root imports for handlers that were previously defined here.
 check = _command_check.check
