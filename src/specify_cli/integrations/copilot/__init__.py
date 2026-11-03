@@ -567,7 +567,6 @@ class CopilotIntegration(IntegrationBase):
             processed = self.process_template(
                 raw, self.key, script_type, arg_placeholder,
                 project_root=project_root,
-                bare=opts.get("bare", False),
             )
             dst_name = self.command_filename(src_file.stem)
             dst_file = self.write_file_and_record(

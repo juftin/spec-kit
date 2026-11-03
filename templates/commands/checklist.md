@@ -4,7 +4,6 @@ scripts:
   sh: scripts/bash/check-prerequisites.sh --json --template checklist-template
   ps: scripts/powershell/check-prerequisites.ps1 -Json -Template checklist-template
   py: scripts/python/check_prerequisites.py --json --template checklist-template
-  cli: specify feature check --json --template checklist-template
 ---
 
 ## Checklist Purpose: "Unit Tests for English"

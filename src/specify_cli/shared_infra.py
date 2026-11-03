@@ -478,7 +478,6 @@ def install_shared_infra(
     refresh_managed: bool = False,
     refresh_hint: str | None = None,
     bare: bool = False,
-    tracker: Any = None,
 ) -> bool:
     """Install shared scripts and templates into *project_path*.
 
@@ -573,106 +572,49 @@ def install_shared_infra(
             return False
         return True
 
-    if not bare:
-        scripts_src = shared_scripts_source(core_pack=core_pack, repo_root=repo_root)
-        if scripts_src.is_dir():
-            dest_scripts = project_path / ".specify" / "scripts"
-            if _ensure_or_bucket_dir(dest_scripts):
-                for variant_dir in variant_dirs:
-                    variant_src = scripts_src / variant_dir
-                    if not variant_src.is_dir():
+    scripts_src = shared_scripts_source(core_pack=core_pack, repo_root=repo_root)
+    if not bare and scripts_src.is_dir():
+        dest_scripts = project_path / ".specify" / "scripts"
+        if _ensure_or_bucket_dir(dest_scripts):
+            for variant_dir in variant_dirs:
+                variant_src = scripts_src / variant_dir
+                if not variant_src.is_dir():
+                    continue
+                dest_variant = dest_scripts / variant_dir
+                if not _ensure_or_bucket_dir(dest_variant):
+                    continue
+                for src_path in variant_src.rglob("*"):
+                    if not src_path.is_file():
                         continue
-                    dest_variant = dest_scripts / variant_dir
-                    if not _ensure_or_bucket_dir(dest_variant):
+                    # Python bytecode caches are local artifacts, not
+                    # workflow scripts — never install them.
+                    if "__pycache__" in src_path.parts:
                         continue
-                    for src_path in variant_src.rglob("*"):
-                        if not src_path.is_file():
-                            continue
-                        # Python bytecode caches are local artifacts, not
-                        # workflow scripts — never install them.
-                        if "__pycache__" in src_path.parts:
-                            continue
-                        # Mark scanned only once a real source file is seen. An
-                        # empty (or symlink-skipped) variant stays untracked, so
-                        # stale-cleanup cannot treat its managed scripts as obsolete.
-                        scanned_variant_dirs.add(variant_dir)
+                    # Mark scanned only once a real source file is seen. An
+                    # empty (or symlink-skipped) variant stays untracked, so
+                    # stale-cleanup cannot treat its managed scripts as obsolete.
+                    scanned_variant_dirs.add(variant_dir)
 
-                        rel_path = src_path.relative_to(variant_src)
-                        dst_path = dest_variant / rel_path
-                        rel = dst_path.relative_to(project_path).as_posix()
-                        seen_rels.add(rel)
-                        if not _safe_dest_or_bucket(dst_path, rel, parent_must_exist=False):
-                            continue
-                        write, bucket = _decide_overwrite(rel, dst_path)
-                        if not write:
-                            if bucket == "preserved":
-                                preserved_user_files.append(rel)
-                            else:
-                                skipped_files.append(rel)
-                                # Record the existing-on-disk file in the manifest so a
-                                # fresh manifest run against an already-populated
-                                # ``.specify/`` tree does not silently drop it (#2107).
-                                # ``prior_hashes`` is the function-scope snapshot taken
-                                # at entry, so this membership check is O(1) and avoids
-                                # the repeated ``dict(self._files)`` copy that
-                                # ``manifest.files`` performs on every access.
-                                if dst_path.is_file() and rel not in prior_hashes:
-                                    try:
-                                        manifest.record_existing(rel, recovered=True)
-                                    except (OSError, ValueError) as exc:
-                                        # Tolerate races / permission issues / non-file
-                                        # collisions so one weird path does not abort
-                                        # the whole install.
-                                        console.print(
-                                            f"[yellow]⚠[/yellow]  could not record {rel} in manifest: {exc}"
-                                        )
-                            continue
-
-                        if not _ensure_or_bucket_dir(dst_path.parent):
-                            continue
-                        content = src_path.read_text(encoding="utf-8")
-                        content = IntegrationBase.resolve_command_refs(
-                            content, invoke_separator, invoke_prefix
-                        )
-                        content = _resolve_dynamic_command_refs(
-                            content, invoke_separator, invoke_prefix
-                        )
-                        planned_copies.append(
-                            (
-                                dst_path,
-                                rel,
-                                content.encode("utf-8"),
-                                src_path.stat().st_mode & 0o777,
-                            )
-                        )
-
-        templates_src = shared_templates_source(core_pack=core_pack, repo_root=repo_root)
-        if templates_src.is_dir():
-            dest_templates = project_path / ".specify" / "templates"
-            if _ensure_or_bucket_dir(dest_templates):
-                for src in templates_src.iterdir():
-                    if not src.is_file() or src.name == "vscode-settings.json" or src.name.startswith("."):
-                        continue
-
-                    dst = dest_templates / src.name
-                    rel = dst.relative_to(project_path).as_posix()
+                    rel_path = src_path.relative_to(variant_src)
+                    dst_path = dest_variant / rel_path
+                    rel = dst_path.relative_to(project_path).as_posix()
                     seen_rels.add(rel)
-                    if not _safe_dest_or_bucket(dst, rel):
+                    if not _safe_dest_or_bucket(dst_path, rel, parent_must_exist=False):
                         continue
-                    write, bucket = _decide_overwrite(rel, dst)
+                    write, bucket = _decide_overwrite(rel, dst_path)
                     if not write:
                         if bucket == "preserved":
                             preserved_user_files.append(rel)
                         else:
                             skipped_files.append(rel)
-                            # Record the existing-on-disk template in the manifest so a
+                            # Record the existing-on-disk file in the manifest so a
                             # fresh manifest run against an already-populated
                             # ``.specify/`` tree does not silently drop it (#2107).
-                            # ``prior_hashes`` is the function-scope snapshot taken at
-                            # entry, so this membership check is O(1) and avoids the
-                            # repeated ``dict(self._files)`` copy that ``manifest.files``
-                            # performs on every access.
-                            if dst.is_file() and rel not in prior_hashes:
+                            # ``prior_hashes`` is the function-scope snapshot taken
+                            # at entry, so this membership check is O(1) and avoids
+                            # the repeated ``dict(self._files)`` copy that
+                            # ``manifest.files`` performs on every access.
+                            if dst_path.is_file() and rel not in prior_hashes:
                                 try:
                                     manifest.record_existing(rel, recovered=True)
                                 except (OSError, ValueError) as exc:
@@ -684,11 +626,67 @@ def install_shared_infra(
                                     )
                         continue
 
-                    content = src.read_text(encoding="utf-8")
+                    if not _ensure_or_bucket_dir(dst_path.parent):
+                        continue
+                    content = src_path.read_text(encoding="utf-8")
                     content = IntegrationBase.resolve_command_refs(
                         content, invoke_separator, invoke_prefix
                     )
-                    planned_templates.append((dst, rel, content))
+                    content = _resolve_dynamic_command_refs(
+                        content, invoke_separator, invoke_prefix
+                    )
+                    planned_copies.append(
+                        (
+                            dst_path,
+                            rel,
+                            content.encode("utf-8"),
+                            src_path.stat().st_mode & 0o777,
+                        )
+                    )
+
+    templates_src = shared_templates_source(core_pack=core_pack, repo_root=repo_root)
+    if not bare and templates_src.is_dir():
+        dest_templates = project_path / ".specify" / "templates"
+        if _ensure_or_bucket_dir(dest_templates):
+            for src in templates_src.iterdir():
+                if not src.is_file() or src.name == "vscode-settings.json" or src.name.startswith("."):
+                    continue
+
+                dst = dest_templates / src.name
+                rel = dst.relative_to(project_path).as_posix()
+                seen_rels.add(rel)
+                if not _safe_dest_or_bucket(dst, rel):
+                    continue
+                write, bucket = _decide_overwrite(rel, dst)
+                if not write:
+                    if bucket == "preserved":
+                        preserved_user_files.append(rel)
+                    else:
+                        skipped_files.append(rel)
+                        # Record the existing-on-disk template in the manifest so a
+                        # fresh manifest run against an already-populated
+                        # ``.specify/`` tree does not silently drop it (#2107).
+                        # ``prior_hashes`` is the function-scope snapshot taken at
+                        # entry, so this membership check is O(1) and avoids the
+                        # repeated ``dict(self._files)`` copy that ``manifest.files``
+                        # performs on every access.
+                        if dst.is_file() and rel not in prior_hashes:
+                            try:
+                                manifest.record_existing(rel, recovered=True)
+                            except (OSError, ValueError) as exc:
+                                # Tolerate races / permission issues / non-file
+                                # collisions so one weird path does not abort
+                                # the whole install.
+                                console.print(
+                                    f"[yellow]⚠[/yellow]  could not record {rel} in manifest: {exc}"
+                                )
+                    continue
+
+                content = src.read_text(encoding="utf-8")
+                content = IntegrationBase.resolve_command_refs(
+                    content, invoke_separator, invoke_prefix
+                )
+                planned_templates.append((dst, rel, content))
 
     # Managed ``.specify/.gitignore`` — keeps machine-local state (the
     # ``feature.json`` pointer and per-machine ``local-config.yml`` overrides)
@@ -833,22 +831,4 @@ def install_shared_infra(
                 console.print(f"    {path}")
 
     manifest.save()
-    if tracker is not None:
-        if bare:
-            tracker.complete("shared-infra", "bare (in-memory templates & scripts)")
-        else:
-            tracker.complete("shared-infra", f"scripts ({script_type}) + templates")
     return True
-
-
-def _install_shared_infra(*args: Any, **kwargs: Any) -> bool:
-    from . import _install_shared_infra as _impl
-
-    return _impl(*args, **kwargs)
-
-
-def _install_shared_infra_or_exit(*args: Any, **kwargs: Any) -> bool:
-    from . import _install_shared_infra_or_exit as _impl
-
-    return _impl(*args, **kwargs)
-

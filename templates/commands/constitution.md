@@ -8,7 +8,6 @@ scripts:
   sh: scripts/bash/resolve-template.sh constitution-template --json
   ps: scripts/powershell/resolve-template.ps1 constitution-template -Json
   py: scripts/python/resolve_template.py constitution-template --json
-  cli: specify template constitution-template --json
 ---
 
 ## User Input

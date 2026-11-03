@@ -186,7 +186,6 @@ def _install_shared_infra(
         refresh_managed=refresh_managed,
         refresh_hint=refresh_hint,
         bare=bare,
-        tracker=tracker,
     )
 
 

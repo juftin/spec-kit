@@ -8,7 +8,6 @@ scripts:
    sh: scripts/bash/check-prerequisites.sh --json --paths-only
    ps: scripts/powershell/check-prerequisites.ps1 -Json -PathsOnly
    py: scripts/python/check_prerequisites.py --json --paths-only
-   cli: specify feature check --json --paths-only
 ---
 
 ## User Input

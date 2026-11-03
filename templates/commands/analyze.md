@@ -4,7 +4,6 @@ scripts:
   sh: scripts/bash/check-prerequisites.sh --json --require-spec --require-tasks --include-tasks
   ps: scripts/powershell/check-prerequisites.ps1 -Json -RequireSpec -RequireTasks -IncludeTasks
   py: scripts/python/check_prerequisites.py --json --require-spec --require-tasks --include-tasks
-  cli: specify feature check --json --require-spec --require-tasks --include-tasks
 ---
 
 ## User Input

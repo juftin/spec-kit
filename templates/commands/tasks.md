@@ -13,7 +13,6 @@ scripts:
   sh: scripts/bash/setup-tasks.sh --json
   ps: scripts/powershell/setup-tasks.ps1 -Json
   py: scripts/python/setup_tasks.py --json
-  cli: specify tasks setup --json
 ---
 
 ## User Input
