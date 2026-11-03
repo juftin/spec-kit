@@ -356,11 +356,11 @@ def register(app: typer.Typer) -> None:
             False, "--trust-integration",
             help="Authorize executing a reviewed external integration package without prompting.",
         ),
-        bare: bool = typer.Option(
-            True,
+        bare: bool | None = typer.Option(
+            None,
             "--bare/--scaffold",
             "--zero-footprint/--legacy",
-            help="Initialize project in clean zero-clone mode without copying internal scripts, templates, or workflows into the repository (default: True). Pass --scaffold to copy legacy scripts.",
+            help="Initialize project in clean zero-clone mode without copying internal scripts, templates, or workflows into the repository (default when --script is omitted). Pass --scaffold to copy legacy scripts.",
         ),
     ):
         """
@@ -632,6 +632,9 @@ def register(app: typer.Typer) -> None:
                     console.print(error_panel)
                     raise typer.Exit(1)
 
+        if bare is None:
+            bare = script_type is None
+
         if script_type:
             if script_type not in SCRIPT_TYPE_CHOICES:
                 console.print(
@@ -642,7 +645,7 @@ def register(app: typer.Typer) -> None:
         else:
             default_script = "ps" if os.name == "nt" else "sh"
 
-            if _prompts_allowed(non_interactive):
+            if _prompts_allowed(non_interactive) and not bare:
                 selected_script = select_with_arrows(
                     SCRIPT_TYPE_CHOICES,
                     "Choose script type (or press Enter)",

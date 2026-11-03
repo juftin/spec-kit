@@ -123,3 +123,49 @@ def test_feature_current_json_output(tmp_path: Path, monkeypatch: pytest.MonkeyP
     assert result.exit_code == 0
     data = json.loads(result.output)
     assert data["feature_directory"] == "docs/specs/001-analytics"
+
+
+def test_feature_check_paths_only(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """feature check --json --paths-only returns paths even before plan.md exists."""
+    monkeypatch.chdir(tmp_path)
+    runner.invoke(app, ["feature", "init", "search-api"])
+    result = runner.invoke(app, ["feature", "check", "--json", "--paths-only"])
+    assert result.exit_code == 0
+    data = json.loads(result.output)
+    assert data["BRANCH"] == "001-search-api"
+    assert data["FEATURE_DIR"].endswith("docs/specs/001-search-api")
+    assert data["FEATURE_SPEC"].endswith("docs/specs/001-search-api/spec.md")
+
+
+def test_feature_check_prerequisites_and_template(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """feature check validates prerequisites and resolves optional template."""
+    monkeypatch.chdir(tmp_path)
+    runner.invoke(app, ["feature", "init", "search-api"])
+
+    # Fails before plan.md exists
+    res_no_plan = runner.invoke(app, ["feature", "check", "--json"])
+    assert res_no_plan.exit_code == 1
+
+    # Setup plan and tasks
+    runner.invoke(app, ["plan", "setup"])
+    runner.invoke(app, ["tasks", "setup"])
+
+    res_ok = runner.invoke(
+        app,
+        [
+            "feature",
+            "check",
+            "--json",
+            "--require-spec",
+            "--require-tasks",
+            "--include-tasks",
+            "--template",
+            "checklist-template",
+        ],
+    )
+    assert res_ok.exit_code == 0
+    data = json.loads(res_ok.output)
+    assert "tasks.md" in data["AVAILABLE_DOCS"]
+    assert "TEMPLATE_CONTENT" in data
+    assert len(data["TEMPLATE_CONTENT"]) > 0
+

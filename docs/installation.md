@@ -87,22 +87,38 @@ syntax used by each agent and mode.
 
 ### Clean Repository & Zero-Footprint Initialization
 
-To use Spec Kit in an existing or new project without copying internal shell scripts, raw templates, or workflows into your repository, pass `--bare` (or `--zero-footprint`):
+By default, `specify init` operates in **zero-clone / zero-footprint** (`--bare`) mode when `--script` is omitted:
 
 ```bash
-specify init . --bare --integration copilot
+specify init . --integration copilot
 ```
 
-In bare mode:
+In default zero-footprint mode:
 - No `.specify/scripts/` or `.specify/templates/` are copied to your project.
-- Spec Kit commands resolve bundled templates in memory directly from the installed package.
+- Spec Kit commands resolve bundled templates in memory directly from the installed package (`specify template`, `specify feature`, `specify plan`, `specify tasks`).
 - Your project tree stays completely clean, with specifications organized under `docs/specs/`.
+- Pass `--scaffold` (or `--script sh|ps|py`) if you want to copy legacy helper scripts into `.specify/`.
+
+### Local Development / Editable Installation
+
+To install Spec Kit from a local source checkout:
+
+```bash
+git clone https://github.com/juftin/spec-kit.git
+cd spec-kit
+uv tool install --editable .
+# or: pip install -e .
+```
 
 ### Global Agent Skills
 
-To install agent skills globally across all projects on your workstation without adding agent configuration files to individual repositories:
+To install Spec Kit agent skills globally across all projects on your workstation without adding agent configuration files to individual repositories:
 
 ```bash
+# Via npx skills (installs pre-rendered skills from skills/speckit-*):
+npx skills add juftin/spec-kit -g
+
+# Or via the specify CLI:
 specify integration install claude --global
 ```
 

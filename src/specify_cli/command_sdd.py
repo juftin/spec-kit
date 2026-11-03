@@ -103,6 +103,7 @@ def plan_setup(
             "FEATURE_DIR": str(feature_dir),
             "FEATURE_SPEC": str(spec_file),
             "IMPL_PLAN": str(plan_file),
+            "BRANCH": feature_dir.name,
         }
         typer.echo(json.dumps(payload, indent=2))
     else:
@@ -132,14 +133,15 @@ def tasks_setup(
         )
         raise typer.Exit(1)
 
+    resolver = PresetResolver(project_root)
+    tasks_content = resolver.resolve_template("tasks-template")
+    if tasks_content is None:
+        typer.echo("Error: Could not resolve tasks-template", err=True)
+        raise typer.Exit(1)
+
     tasks_file = feature_dir / "tasks.md"
     created = False
     if not tasks_file.is_file():
-        resolver = PresetResolver(project_root)
-        tasks_content = resolver.resolve_template("tasks-template")
-        if tasks_content is None:
-            typer.echo("Error: Could not resolve tasks-template", err=True)
-            raise typer.Exit(1)
         tasks_file.write_text(tasks_content, encoding="utf-8")
         created = True
 
@@ -147,6 +149,8 @@ def tasks_setup(
     tasks_file_rel = (Path(feature_dir_rel_str) / "tasks.md").as_posix()
 
     if json_output:
+        from .command_feature import _available_docs
+
         payload = {
             "feature_directory": feature_dir_rel_str,
             "plan_file": plan_file_rel,
@@ -155,6 +159,9 @@ def tasks_setup(
             "FEATURE_DIR": str(feature_dir),
             "IMPL_PLAN": str(plan_file),
             "TASKS_FILE": str(tasks_file),
+            "AVAILABLE_DOCS": _available_docs(feature_dir, include_tasks=False),
+            "TASKS_TEMPLATE": str(tasks_file),
+            "TASKS_TEMPLATE_CONTENT": tasks_content,
         }
         typer.echo(json.dumps(payload, indent=2))
     else:

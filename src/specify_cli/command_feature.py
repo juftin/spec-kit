@@ -157,6 +157,133 @@ def feature_current(
         typer.echo(feature_dir)
 
 
+def _available_docs(feature_dir: Path, include_tasks: bool = False) -> list[str]:
+    docs: list[str] = []
+    if (feature_dir / "research.md").is_file():
+        docs.append("research.md")
+    if (feature_dir / "data-model.md").is_file():
+        docs.append("data-model.md")
+    contracts_dir = feature_dir / "contracts"
+    try:
+        if contracts_dir.is_dir() and any(contracts_dir.iterdir()):
+            docs.append("contracts/")
+    except OSError:
+        pass
+    if (feature_dir / "quickstart.md").is_file():
+        docs.append("quickstart.md")
+    if include_tasks and (feature_dir / "tasks.md").is_file():
+        docs.append("tasks.md")
+    return docs
+
+
+@feature_app.command("check")
+def feature_check(
+    json_output: bool = typer.Option(
+        False,
+        "--json",
+        help="Output prerequisite check results as JSON.",
+    ),
+    require_spec: bool = typer.Option(
+        False,
+        "--require-spec",
+        help="Require spec.md to exist.",
+    ),
+    require_tasks: bool = typer.Option(
+        False,
+        "--require-tasks",
+        help="Require tasks.md to exist.",
+    ),
+    include_tasks: bool = typer.Option(
+        False,
+        "--include-tasks",
+        help="Include tasks.md in AVAILABLE_DOCS list.",
+    ),
+    paths_only: bool = typer.Option(
+        False,
+        "--paths-only",
+        help="Only output path variables without validating prerequisites.",
+    ),
+    template: str | None = typer.Option(
+        None,
+        "--template",
+        help="Include composed template content in JSON output.",
+    ),
+) -> None:
+    """Validate feature prerequisites and output feature paths and available documents."""
+    project_root = _resolve_project_root()
+    feature_json_path = project_root / ".specify" / "feature.json"
+    feature_dir_rel_str: str | None = None
+    if feature_json_path.is_file():
+        try:
+            data = json.loads(feature_json_path.read_text(encoding="utf-8"))
+            if isinstance(data, dict):
+                feature_dir_rel_str = data.get("feature_directory")
+        except Exception:
+            pass
+
+    if not feature_dir_rel_str:
+        typer.echo("Error: No active feature found in .specify/feature.json", err=True)
+        raise typer.Exit(1)
+
+    feature_dir = (project_root / feature_dir_rel_str).resolve()
+    spec_file = feature_dir / "spec.md"
+    plan_file = feature_dir / "plan.md"
+    tasks_file = feature_dir / "tasks.md"
+
+    if paths_only:
+        payload = {
+            "REPO_ROOT": str(project_root.resolve()),
+            "BRANCH": feature_dir.name,
+            "FEATURE_DIR": str(feature_dir),
+            "FEATURE_SPEC": str(spec_file),
+            "IMPL_PLAN": str(plan_file),
+            "TASKS": str(tasks_file),
+        }
+        if json_output:
+            typer.echo(json.dumps(payload, indent=2))
+        else:
+            for k, v in payload.items():
+                typer.echo(f"{k}: {v}")
+        return
+
+    if not feature_dir.is_dir():
+        typer.echo(f"Error: Feature directory not found: {feature_dir}", err=True)
+        raise typer.Exit(1)
+
+    if not plan_file.is_file() or plan_file.stat().st_size == 0:
+        typer.echo(f"Error: plan.md not found or empty in {feature_dir}", err=True)
+        raise typer.Exit(1)
+
+    if require_spec and not spec_file.is_file():
+        typer.echo(f"Error: spec.md not found in {feature_dir}", err=True)
+        raise typer.Exit(1)
+
+    if require_tasks and not tasks_file.is_file():
+        typer.echo(f"Error: tasks.md not found in {feature_dir}", err=True)
+        raise typer.Exit(1)
+
+    docs = _available_docs(feature_dir, include_tasks=include_tasks)
+    template_content: str | None = None
+    if template:
+        resolver = PresetResolver(project_root)
+        template_content = resolver.resolve_template(template)
+        if template_content is None:
+            typer.echo(f"Error: Could not resolve template '{template}'", err=True)
+            raise typer.Exit(1)
+
+    if json_output:
+        out: dict[str, Any] = {
+            "FEATURE_DIR": str(feature_dir),
+            "AVAILABLE_DOCS": docs,
+        }
+        if template is not None:
+            out["TEMPLATE_CONTENT"] = template_content
+        typer.echo(json.dumps(out, indent=2))
+    else:
+        typer.echo(f"FEATURE_DIR:{feature_dir}")
+        typer.echo(f"AVAILABLE_DOCS: {', '.join(docs)}")
+
+
 def register(app: typer.Typer) -> None:
     """Register feature commands on the parent application."""
     app.add_typer(feature_app, name="feature")

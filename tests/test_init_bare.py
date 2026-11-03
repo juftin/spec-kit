@@ -109,3 +109,28 @@ def test_init_bare_claude_skills(tmp_path: Path):
     assert plan_skill.is_file()
     skill_content = plan_skill.read_text(encoding="utf-8")
     assert "specify plan setup --json" in skill_content
+
+
+def test_init_default_is_bare(tmp_path: Path):
+    """Test specify init defaults to bare zero-footprint mode when --script is omitted."""
+    proj = tmp_path / "default-bare-proj"
+
+    result = runner.invoke(
+        app,
+        [
+            "init",
+            str(proj),
+            "--integration",
+            "copilot",
+            "--non-interactive",
+        ],
+    )
+    assert result.exit_code == 0, f"Init failed with output:\n{result.output}"
+
+    assert not (proj / ".specify" / "scripts").exists()
+    assert not (proj / ".specify" / "templates").exists()
+    assert not (proj / ".specify" / "workflows").exists()
+
+    opts = json.loads((proj / ".specify" / "init-options.json").read_text(encoding="utf-8"))
+    assert opts.get("footprint") == "bare"
+
