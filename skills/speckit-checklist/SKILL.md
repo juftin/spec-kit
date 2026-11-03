@@ -2,7 +2,7 @@
 name: "speckit-checklist"
 description: "Generate a custom checklist for the current feature based on user requirements."
 argument-hint: "Domain or focus area for the checklist"
-compatibility: "Requires spec-kit project structure with .specify/ directory"
+compatibility: "Works with specify CLI (uv tool install specify-cli --from git+https://github.com/juftin/spec-kit.git or uvx)"
 metadata:
   author: "github-spec-kit"
   source: "templates/commands/checklist.md"
@@ -40,6 +40,8 @@ disable-model-invocation: false
 - This command generates or appends checklist items; it MUST NOT mark generated items `[x]`.
 - An agent may assist with evaluating items only when explicitly asked by the reviewer.
 - `checklists/requirements.md` is a separate built-in spec-quality checklist maintained by `/speckit-specify` and `/speckit-clarify`; do not treat that exception as applying to custom checklists generated here.
+
+> **Specify CLI Execution**: When running `specify ...` commands below, if `specify` is not installed on `PATH`, either install it globally with `uv tool install specify-cli --from git+https://github.com/juftin/spec-kit.git` or prefix the command with `uvx --from git+https://github.com/juftin/spec-kit.git ` (e.g. `uvx --from git+https://github.com/juftin/spec-kit.git specify ...`). All feature specifications live in `docs/specs/<NNN>-<feature-name>/` by default (with fallback to `specs/` if already present). See the `speckit` skill for the full `specify` CLI reference.
 
 ## User Input
 

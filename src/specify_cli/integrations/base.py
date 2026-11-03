@@ -959,6 +959,15 @@ class IntegrationBase(ABC):
                     if "setup-tasks" in candidate_cmd or "setup_tasks" in candidate_cmd:
                         found_cli = "specify tasks setup --json"
                         break
+                    for marker in ("check-prerequisites.sh", "check_prerequisites.py"):
+                        if marker in candidate_cmd:
+                            args_part = candidate_cmd.split(marker, 1)[-1].strip()
+                            found_cli = (
+                                f"specify feature check {args_part}".strip()
+                            )
+                            break
+                    if found_cli:
+                        break
                     m2 = re.search(r"--template\s+([A-Za-z0-9_-]+)", candidate_cmd)
                     if m2:
                         found_cli = f"specify template {m2.group(1)} --json"

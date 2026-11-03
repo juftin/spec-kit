@@ -2,7 +2,7 @@
 name: "speckit-constitution"
 description: "Create or update the project constitution from interactive or provided principle inputs."
 argument-hint: "Principles or values for the project constitution"
-compatibility: "Requires spec-kit project structure with .specify/ directory"
+compatibility: "Works with specify CLI (uv tool install specify-cli --from git+https://github.com/juftin/spec-kit.git or uvx)"
 metadata:
   author: "github-spec-kit"
   source: "templates/commands/constitution.md"
@@ -10,6 +10,8 @@ user-invocable: true
 disable-model-invocation: false
 ---
 
+
+> **Specify CLI Execution**: When running `specify ...` commands below, if `specify` is not installed on `PATH`, either install it globally with `uv tool install specify-cli --from git+https://github.com/juftin/spec-kit.git` or prefix the command with `uvx --from git+https://github.com/juftin/spec-kit.git ` (e.g. `uvx --from git+https://github.com/juftin/spec-kit.git specify ...`). All feature specifications live in `docs/specs/<NNN>-<feature-name>/` by default (with fallback to `specs/` if already present). See the `speckit` skill for the full `specify` CLI reference.
 
 ## User Input
 

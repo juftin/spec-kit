@@ -1,7 +1,7 @@
 ---
 name: "speckit-converge"
 description: "Assess the current codebase against the feature's spec, plan, and tasks, then append any remaining unbuilt work as new tasks to tasks.md so implement can complete it."
-compatibility: "Requires spec-kit project structure with .specify/ directory"
+compatibility: "Works with specify CLI (uv tool install specify-cli --from git+https://github.com/juftin/spec-kit.git or uvx)"
 metadata:
   author: "github-spec-kit"
   source: "templates/commands/converge.md"
@@ -9,6 +9,8 @@ user-invocable: true
 disable-model-invocation: false
 ---
 
+
+> **Specify CLI Execution**: When running `specify ...` commands below, if `specify` is not installed on `PATH`, either install it globally with `uv tool install specify-cli --from git+https://github.com/juftin/spec-kit.git` or prefix the command with `uvx --from git+https://github.com/juftin/spec-kit.git ` (e.g. `uvx --from git+https://github.com/juftin/spec-kit.git specify ...`). All feature specifications live in `docs/specs/<NNN>-<feature-name>/` by default (with fallback to `specs/` if already present). See the `speckit` skill for the full `specify` CLI reference.
 
 ## User Input
 

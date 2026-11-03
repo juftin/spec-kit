@@ -2,7 +2,7 @@
 name: "speckit-specify"
 description: "Create or update the feature specification from a natural language feature description."
 argument-hint: "Describe the feature you want to specify"
-compatibility: "Requires spec-kit project structure with .specify/ directory"
+compatibility: "Works with specify CLI (uv tool install specify-cli --from git+https://github.com/juftin/spec-kit.git or uvx)"
 metadata:
   author: "github-spec-kit"
   source: "templates/commands/specify.md"
@@ -10,6 +10,8 @@ user-invocable: true
 disable-model-invocation: false
 ---
 
+
+> **Specify CLI Execution**: When running `specify ...` commands below, if `specify` is not installed on `PATH`, either install it globally with `uv tool install specify-cli --from git+https://github.com/juftin/spec-kit.git` or prefix the command with `uvx --from git+https://github.com/juftin/spec-kit.git ` (e.g. `uvx --from git+https://github.com/juftin/spec-kit.git specify ...`). All feature specifications live in `docs/specs/<NNN>-<feature-name>/` by default (with fallback to `specs/` if already present). See the `speckit` skill for the full `specify` CLI reference.
 
 ## User Input
 
@@ -94,18 +96,20 @@ Given that feature description, do this:
       - If `branch_numbering` was used (and `feature_numbering` was absent), emit a one-line warning: "⚠️ `branch_numbering` in init-options.json is deprecated. Rename to `feature_numbering`."
 
    **Create the directory and spec file**:
-   - Run `specify template spec-template --json` from the repository root and parse `TEMPLATE_CONTENT` as the active `spec-template`. The shared resolver composes project overrides, preset layers, and extension layers over the core template, including `append`, `prepend`, and `wrap` strategies. If it fails, stop and report the resolution error; do not continue with only one contributing template layer.
-   - `mkdir -p SPECIFY_FEATURE_DIRECTORY`
-   - Write `TEMPLATE_CONTENT` to `SPECIFY_FEATURE_DIRECTORY/spec.md` as the starting point. Do not copy a template file from disk instead: when a preset composes `spec-template`, no single file holds the full template.
-   - Set `SPEC_FILE` to `SPECIFY_FEATURE_DIRECTORY/spec.md`
-   - Persist the resolved path to `.specify/feature.json`:
-     ```json
-     {
-       "feature_directory": "<resolved feature dir>"
-     }
-     ```
-     Write the actual resolved directory path value (for example, `docs/specs/003-user-auth`), not the literal string `SPECIFY_FEATURE_DIRECTORY`.
-     This allows downstream commands (`/speckit-plan`, `/speckit-tasks`, etc.) to locate the feature directory without relying on git branch name conventions.
+   - **Recommended CLI shortcut**: When using sequential numbering without a custom `SPECIFY_FEATURE_DIRECTORY`, you can run `specify feature init <short-name> --json` (or `uvx --from git+https://github.com/juftin/spec-kit.git specify feature init <short-name> --json` if `specify` is not installed on `PATH`), which automatically allocates `docs/specs/<NNN>-<short-name>/`, renders `spec.md` from `spec-template`, and updates `.specify/feature.json`.
+   - Or manually:
+     - Run `specify template spec-template --json` from the repository root (if `specify` is not on `PATH`, prefix with `uvx --from git+https://github.com/juftin/spec-kit.git `) and parse `TEMPLATE_CONTENT` as the active `spec-template`. The shared resolver composes project overrides, preset layers, and extension layers over the core template, including `append`, `prepend`, and `wrap` strategies. If it fails, stop and report the resolution error; do not continue with only one contributing template layer.
+     - `mkdir -p SPECIFY_FEATURE_DIRECTORY`
+     - Write `TEMPLATE_CONTENT` to `SPECIFY_FEATURE_DIRECTORY/spec.md` as the starting point. Do not copy a template file from disk instead: when a preset composes `spec-template`, no single file holds the full template.
+     - Set `SPEC_FILE` to `SPECIFY_FEATURE_DIRECTORY/spec.md`
+     - Persist the resolved path to `.specify/feature.json`:
+       ```json
+       {
+         "feature_directory": "<resolved feature dir>"
+       }
+       ```
+       Write the actual resolved directory path value (for example, `docs/specs/003-user-auth`), not the literal string `SPECIFY_FEATURE_DIRECTORY`.
+       This allows downstream commands (`/speckit-plan`, `/speckit-tasks`, etc.) to locate the feature directory without relying on git branch name conventions.
 
    **IMPORTANT**:
    - You must only create one feature per `/speckit-specify` invocation

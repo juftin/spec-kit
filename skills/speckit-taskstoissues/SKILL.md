@@ -2,7 +2,7 @@
 name: "speckit-taskstoissues"
 description: "Deprecated: Convert existing tasks into actionable, dependency-ordered GitHub issues for the feature based on available design artifacts."
 argument-hint: "Optional filter or label for GitHub issues"
-compatibility: "Requires spec-kit project structure with .specify/ directory"
+compatibility: "Works with specify CLI (uv tool install specify-cli --from git+https://github.com/juftin/spec-kit.git or uvx)"
 metadata:
   author: "github-spec-kit"
   source: "templates/commands/taskstoissues.md"
@@ -18,6 +18,8 @@ You **MUST display the following concise warning first**, as the first step of t
 > ⚠️ `/speckit-taskstoissues` is deprecated and will be removed in a future minor release. Use the bundled `github` extension instead: run `specify extension add github`, then invoke `/speckit-github-taskstoissues`.
 
 Continue with the existing workflow unchanged. Do not install or enable the extension automatically, do not stop, and do not run the replacement command.
+
+> **Specify CLI Execution**: When running `specify ...` commands below, if `specify` is not installed on `PATH`, either install it globally with `uv tool install specify-cli --from git+https://github.com/juftin/spec-kit.git` or prefix the command with `uvx --from git+https://github.com/juftin/spec-kit.git ` (e.g. `uvx --from git+https://github.com/juftin/spec-kit.git specify ...`). All feature specifications live in `docs/specs/<NNN>-<feature-name>/` by default (with fallback to `specs/` if already present). See the `speckit` skill for the full `specify` CLI reference.
 
 ## User Input
 
