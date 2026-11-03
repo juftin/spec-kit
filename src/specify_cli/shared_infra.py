@@ -477,6 +477,7 @@ def install_shared_infra(
     invoke_prefix: str = "/",
     refresh_managed: bool = False,
     refresh_hint: str | None = None,
+    bare: bool = False,
 ) -> bool:
     """Install shared scripts and templates into *project_path*.
 
@@ -572,7 +573,7 @@ def install_shared_infra(
         return True
 
     scripts_src = shared_scripts_source(core_pack=core_pack, repo_root=repo_root)
-    if scripts_src.is_dir():
+    if not bare and scripts_src.is_dir():
         dest_scripts = project_path / ".specify" / "scripts"
         if _ensure_or_bucket_dir(dest_scripts):
             for variant_dir in variant_dirs:
@@ -644,7 +645,7 @@ def install_shared_infra(
                     )
 
     templates_src = shared_templates_source(core_pack=core_pack, repo_root=repo_root)
-    if templates_src.is_dir():
+    if not bare and templates_src.is_dir():
         dest_templates = project_path / ".specify" / "templates"
         if _ensure_or_bucket_dir(dest_templates):
             for src in templates_src.iterdir():

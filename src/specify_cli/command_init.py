@@ -356,6 +356,12 @@ def register(app: typer.Typer) -> None:
             False, "--trust-integration",
             help="Authorize executing a reviewed external integration package without prompting.",
         ),
+        bare: bool | None = typer.Option(
+            None,
+            "--bare/--scaffold",
+            "--zero-footprint/--legacy",
+            help="Initialize project in clean zero-clone mode without copying internal scripts, templates, or workflows into the repository (default when --script is omitted). Pass --scaffold to copy legacy scripts.",
+        ),
     ):
         """
         Initialize a new Specify project.
@@ -626,6 +632,9 @@ def register(app: typer.Typer) -> None:
                     console.print(error_panel)
                     raise typer.Exit(1)
 
+        if bare is None:
+            bare = script_type is None
+
         if script_type:
             if script_type not in SCRIPT_TYPE_CHOICES:
                 console.print(
@@ -636,7 +645,7 @@ def register(app: typer.Typer) -> None:
         else:
             default_script = "ps" if os.name == "nt" else "sh"
 
-            if _prompts_allowed(non_interactive):
+            if _prompts_allowed(non_interactive) and not bare:
                 selected_script = select_with_arrows(
                     SCRIPT_TYPE_CHOICES,
                     "Choose script type (or press Enter)",
@@ -722,6 +731,9 @@ def register(app: typer.Typer) -> None:
                     if extra:
                         integration_parsed_options.update(extra)
 
+                if bare:
+                    save_init_options(project_path, {**previous_init_options, "footprint": "bare"})
+
                 from .events import resolve_events
                 events_map = resolve_events(
                     resolved_integration.key,
@@ -736,6 +748,7 @@ def register(app: typer.Typer) -> None:
                     script_type=selected_script,
                     raw_options=integration_options,
                     events=events_map,
+                    bare=bare,
                 )
                 manifest.save()
 
@@ -810,13 +823,19 @@ def register(app: typer.Typer) -> None:
                         integration_parsed_options,
                         project_path,
                     ),
+                    bare=bare,
                 )
-                tracker.complete(
-                    "shared-infra", f"scripts ({selected_script}) + templates"
-                )
+                if bare:
+                    tracker.complete(
+                        "shared-infra", "bare (in-memory templates & scripts)"
+                    )
+                else:
+                    tracker.complete(
+                        "shared-infra", f"scripts ({selected_script}) + templates"
+                    )
 
                 try:
-                    bundled_wf = _locate_bundled_workflow("speckit")
+                    bundled_wf = None if bare else _locate_bundled_workflow("speckit")
                     if bundled_wf:
                         from .workflows.catalog import WorkflowRegistry
                         from .workflows.engine import WorkflowDefinition
@@ -853,7 +872,7 @@ def register(app: typer.Typer) -> None:
                             )
                             tracker.complete("workflow", "speckit installed")
                     else:
-                        tracker.skip("workflow", "bundled workflow not found")
+                        tracker.skip("workflow", "skipped in bare mode" if bare else "bundled workflow not found")
                 except Exception as wf_err:
                     sanitized_wf = str(wf_err).replace("\n", " ").strip()
                     tracker.error("workflow", f"install failed: {sanitized_wf[:120]}")
@@ -874,9 +893,14 @@ def register(app: typer.Typer) -> None:
                     init_opts["ai_skills"] = True
                 else:
                     init_opts.pop("ai_skills", None)
+                if bare:
+                    init_opts["footprint"] = "bare"
                 save_init_options(project_path, init_opts)
 
-                ensure_executable_scripts(project_path, tracker=tracker)
+                if bare:
+                    tracker.skip("chmod", "skipped in bare mode")
+                else:
+                    ensure_executable_scripts(project_path, tracker=tracker)
 
                 if preset:
                     try:

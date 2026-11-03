@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 import typer
 from rich.markup import escape
@@ -31,19 +32,50 @@ def integration_install(
     force: bool = typer.Option(False, "--force", help="Allow multi-install when integrations are not declared safe"),
     integration_options: str | None = typer.Option(None, "--integration-options", help='Options for the integration (e.g. --integration-options="--commands-dir .myagent/cmds")'),
     trust_integration: bool = typer.Option(False, "--trust-integration", help="Authorize executing a reviewed external integration package without prompting"),
+    global_install: bool = typer.Option(False, "--global", "-g", help="Install integration globally in user home directory rather than project root"),
 ):
     """Install an integration into an existing project."""
     from . import INTEGRATION_REGISTRY, get_integration
     from .manifest import IntegrationManifest
-    from .. import _require_specify_project, _install_shared_infra_or_exit
 
-    project_root = _require_specify_project()
     integration = get_integration(key)
     if integration is None:
         console.print(f"[red]Error:[/red] Unknown integration '{key}'")
         available = ", ".join(sorted(INTEGRATION_REGISTRY.keys()))
         console.print(f"Available integrations: {available}")
         raise typer.Exit(1)
+
+    if global_install:
+        target_root = Path.home()
+        raw_options, parsed_options = _resolve_integration_options(
+            integration, {}, key, integration_options
+        )
+        selected_script = script or ("ps" if os.name == "nt" else "sh")
+        manifest = IntegrationManifest(
+            integration.key, target_root, version=_get_speckit_version()
+        )
+        from ..events import resolve_events
+
+        events_map = resolve_events(
+            integration.key,
+            integration.config,
+            target_root,
+            parsed_options,
+        )
+        integration.setup(
+            target_root,
+            manifest,
+            parsed_options=parsed_options,
+            script_type=selected_script,
+            raw_options=raw_options,
+            events=events_map,
+        )
+        console.print(f"Integration '{key}' installed globally in {target_root}")
+        return
+
+    from .. import _require_specify_project, _install_shared_infra_or_exit
+
+    project_root = _require_specify_project()
 
     current = _read_integration_json(project_root)
     default_key = _default_integration_key(current)

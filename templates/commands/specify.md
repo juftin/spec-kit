@@ -12,6 +12,7 @@ scripts:
   sh: scripts/bash/resolve-template.sh spec-template --json
   ps: scripts/powershell/resolve-template.ps1 spec-template -Json
   py: scripts/python/resolve_template.py spec-template --json
+  cli: specify template spec-template --json
 ---
 
 ## User Input
@@ -83,31 +84,33 @@ Given that feature description, do this:
 
 3. **Create the spec feature directory**:
 
-   Specs live under the default `specs/` directory unless the user explicitly provides `SPECIFY_FEATURE_DIRECTORY`.
+   Specs live under the default `docs/specs/` directory (or `specs/` if already present in the project root) unless the user explicitly provides `SPECIFY_FEATURE_DIRECTORY`.
 
    **Resolution order for `SPECIFY_FEATURE_DIRECTORY`**:
    1. If the user explicitly provided `SPECIFY_FEATURE_DIRECTORY` (e.g., via environment variable, argument, or configuration), use it as-is
-   2. Otherwise, auto-generate it under `specs/`:
+   2. Otherwise, auto-generate it under `docs/specs/` (or `specs/` if existing):
       - Check `.specify/init-options.json` for `feature_numbering` (preferred) or `branch_numbering` (deprecated, migration only — will be removed in a future release)
       - If `"timestamp"`: prefix is `YYYYMMDD-HHMMSS` (current timestamp)
-      - If `"sequential"` or absent: prefix is `NNN` (next available 3-digit number after scanning existing directories in `specs/`)
+      - If `"sequential"` or absent: prefix is `NNN` (next available 3-digit number after scanning existing directories in the specs base dir)
       - Construct the directory name: `<prefix>-<short-name>` (e.g., `003-user-auth` or `20260319-143022-user-auth`)
-      - Set `SPECIFY_FEATURE_DIRECTORY` to `specs/<directory-name>`
+      - Set `SPECIFY_FEATURE_DIRECTORY` to `docs/specs/<directory-name>` (or `specs/<directory-name>` if `specs/` already exists)
       - If `branch_numbering` was used (and `feature_numbering` was absent), emit a one-line warning: "⚠️ `branch_numbering` in init-options.json is deprecated. Rename to `feature_numbering`."
 
    **Create the directory and spec file**:
-   - Run `{SCRIPT}` from the repository root and parse `TEMPLATE_CONTENT` as the active `spec-template`. The shared resolver composes project overrides, preset layers, and extension layers over the core template, including `append`, `prepend`, and `wrap` strategies. If it fails, stop and report the resolution error; do not continue with only one contributing template layer.
-   - `mkdir -p SPECIFY_FEATURE_DIRECTORY`
-   - Write `TEMPLATE_CONTENT` to `SPECIFY_FEATURE_DIRECTORY/spec.md` as the starting point. Do not copy a template file from disk instead: when a preset composes `spec-template`, no single file holds the full template.
-   - Set `SPEC_FILE` to `SPECIFY_FEATURE_DIRECTORY/spec.md`
-   - Persist the resolved path to `.specify/feature.json`:
-     ```json
-     {
-       "feature_directory": "<resolved feature dir>"
-     }
-     ```
-     Write the actual resolved directory path value (for example, `specs/003-user-auth`), not the literal string `SPECIFY_FEATURE_DIRECTORY`.
-     This allows downstream commands (`__SPECKIT_COMMAND_PLAN__`, `__SPECKIT_COMMAND_TASKS__`, etc.) to locate the feature directory without relying on git branch name conventions.
+   - **Recommended CLI shortcut**: When using sequential numbering without a custom `SPECIFY_FEATURE_DIRECTORY`, you can run `specify feature init <short-name> --json` (or `uvx --from git+https://github.com/juftin/spec-kit.git specify feature init <short-name> --json` if `specify` is not installed on `PATH`), which automatically allocates `docs/specs/<NNN>-<short-name>/`, renders `spec.md` from `spec-template`, and updates `.specify/feature.json`.
+   - Or manually:
+     - Run `{SCRIPT}` from the repository root (if `specify` is not on `PATH`, prefix with `uvx --from git+https://github.com/juftin/spec-kit.git `) and parse `TEMPLATE_CONTENT` as the active `spec-template`. The shared resolver composes project overrides, preset layers, and extension layers over the core template, including `append`, `prepend`, and `wrap` strategies. If it fails, stop and report the resolution error; do not continue with only one contributing template layer.
+     - `mkdir -p SPECIFY_FEATURE_DIRECTORY`
+     - Write `TEMPLATE_CONTENT` to `SPECIFY_FEATURE_DIRECTORY/spec.md` as the starting point. Do not copy a template file from disk instead: when a preset composes `spec-template`, no single file holds the full template.
+     - Set `SPEC_FILE` to `SPECIFY_FEATURE_DIRECTORY/spec.md`
+     - Persist the resolved path to `.specify/feature.json`:
+       ```json
+       {
+         "feature_directory": "<resolved feature dir>"
+       }
+       ```
+       Write the actual resolved directory path value (for example, `docs/specs/003-user-auth`), not the literal string `SPECIFY_FEATURE_DIRECTORY`.
+       This allows downstream commands (`__SPECKIT_COMMAND_PLAN__`, `__SPECKIT_COMMAND_TASKS__`, etc.) to locate the feature directory without relying on git branch name conventions.
 
    **IMPORTANT**:
    - You must only create one feature per `__SPECKIT_COMMAND_SPECIFY__` invocation

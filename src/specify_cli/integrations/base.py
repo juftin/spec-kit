@@ -890,6 +890,7 @@ class IntegrationBase(ABC):
         arg_placeholder: str = "$ARGUMENTS",
         invoke_separator: str = ".",
         project_root: Path | None = None,
+        bare: bool = False,
     ) -> str:
         """Process a raw command template into agent-ready content.
 
@@ -927,13 +928,67 @@ class IntegrationBase(ABC):
                 if m:
                     script_commands[m.group(1)] = m.group(2).strip()
 
-        selected_script_type = (
-            IntegrationBase.select_script_variant(script_type, script_commands)
-            if script_commands
-            else ""
-        )
+        is_bare = bare or script_type == "cli"
+        if not is_bare and project_root is not None:
+            try:
+                from specify_cli._init_options import load_init_options
 
-        script_command = script_commands.get(selected_script_type, "")
+                opts = load_init_options(project_root)
+                if opts.get("footprint") == "bare":
+                    is_bare = True
+            except Exception:
+                pass
+
+        if is_bare:
+            if "cli" in script_commands:
+                selected_script_type = "cli"
+                script_command = script_commands["cli"]
+            else:
+                found_cli = None
+                for candidate_cmd in script_commands.values():
+                    m = re.search(
+                        r"resolve[-_]template(?:\.sh|\.ps1|\.py)?\s+([A-Za-z0-9_-]+)",
+                        candidate_cmd,
+                    )
+                    if m:
+                        found_cli = f"specify template {m.group(1)} --json"
+                        break
+                    if "setup-plan" in candidate_cmd or "setup_plan" in candidate_cmd:
+                        found_cli = "specify plan setup --json"
+                        break
+                    if "setup-tasks" in candidate_cmd or "setup_tasks" in candidate_cmd:
+                        found_cli = "specify tasks setup --json"
+                        break
+                    for marker in ("check-prerequisites.sh", "check_prerequisites.py"):
+                        if marker in candidate_cmd:
+                            args_part = candidate_cmd.split(marker, 1)[-1].strip()
+                            found_cli = (
+                                f"specify feature check {args_part}".strip()
+                            )
+                            break
+                    if found_cli:
+                        break
+                    m2 = re.search(r"--template\s+([A-Za-z0-9_-]+)", candidate_cmd)
+                    if m2:
+                        found_cli = f"specify template {m2.group(1)} --json"
+                        break
+                if found_cli:
+                    selected_script_type = "cli"
+                    script_command = found_cli
+                else:
+                    selected_script_type = (
+                        IntegrationBase.select_script_variant(script_type, script_commands)
+                        if script_commands
+                        else ""
+                    )
+                    script_command = script_commands.get(selected_script_type, "")
+        else:
+            selected_script_type = (
+                IntegrationBase.select_script_variant(script_type, script_commands)
+                if script_commands
+                else ""
+            )
+            script_command = script_commands.get(selected_script_type, "")
 
         # 2. Replace {SCRIPT}
         if script_command:
@@ -1908,6 +1963,7 @@ class SkillsIntegration(IntegrationBase):
                 raw, self.key, script_type, arg_placeholder,
                 project_root=project_root,
                 invoke_separator=self.invoke_separator,
+                bare=opts.get("bare", False),
             )
             # Strip the processed frontmatter — we rebuild it for skills.
             # Preserve leading whitespace in the body to match release ZIP

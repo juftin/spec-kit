@@ -415,6 +415,8 @@ def external_lifecycle(operation: str):
         @installer.registry_synchronized
         def invoke(*args, **kwargs):
             values = signature.bind_partial(*args, **kwargs).arguments
+            if values.get("global_install"):
+                return handler(*args, **kwargs)
             loaded = False
             if operation == "init":
                 project_name = values.get("project_name")
