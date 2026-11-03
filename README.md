@@ -70,19 +70,64 @@ community source code before installing or running it.
 
 ## Get started
 
-You need Python 3.11+, [uv](https://github.github.io/spec-kit/install/uv.html),
-and a supported AI coding agent on Linux, macOS, or Windows.
+Spec Kit operates in a modern, **zero-clone / zero-footprint** model: you never need to clone the Spec Kit repository into your workspace, and running Spec Kit will never pollute your repository with internal helper shell scripts or templates. All specifications, plans, and task breakdowns are stored cleanly under `docs/specs/`.
 
-Run these commands in your terminal to install Spec Kit and create a project.
-This example uses GitHub Copilot.
+You need Python 3.11+ and [uv](https://github.github.io/spec-kit/install/uv.html), or Node.js (for `npx skills`), and a supported AI coding agent (Claude Code, GitHub Copilot, Cursor, Roo Code, etc.) on Linux, macOS, or Windows.
+
+### Installation Options
+
+Choose the installation method that fits your workflow:
+
+#### 1. Install with `uv` (Git URL format)
+
+Install the `specify` CLI globally using the git URL format:
 
 ```bash
-uv tool install specify-cli
-specify init my-project --integration copilot
-# Or for a clean repo with zero copied scripts/templates:
-# specify init my-project --bare --integration copilot
-cd my-project
+uv tool install specify-cli --from git+https://github.com/juftin/spec-kit.git
 ```
+
+Or run directly on the fly without permanent installation:
+
+```bash
+uvx --from git+https://github.com/juftin/spec-kit.git specify init . --integration copilot
+```
+
+#### 2. Install Locally (Development / Editable)
+
+To install Spec Kit from a local checkout:
+
+```bash
+git clone https://github.com/juftin/spec-kit.git
+cd spec-kit
+uv tool install --editable .
+# or: pip install -e .
+```
+
+#### 3. Install Globally via `npx skills`
+
+Install pre-rendered Spec Kit agent skills globally across all your projects without touching your repositories:
+
+```bash
+npx skills add juftin/spec-kit -g
+```
+
+This installs Spec Kit skills (`/speckit-*`) directly into your global agent environments (e.g. Claude Code, Cursor, Copilot), allowing you to invoke Spec-Driven Development commands in any repository immediately.
+
+---
+
+### Initialize a Project
+
+In any existing repository or a new project directory, initialize Spec Kit:
+
+```bash
+cd my-project
+specify init . --integration copilot
+```
+
+By default, `specify init` creates a clean, zero-footprint workspace:
+- **Zero file pollution**: No `.specify/scripts/` or `.specify/templates/` copied into your codebase.
+- **Documentation standard**: All feature specs live cleanly in `docs/specs/<feature-name>/`.
+- **Pure CLI execution**: Agent skills invoke the `specify` CLI directly to query templates and manage state.
 
 <a id="-supported-ai-coding-agent-integrations"></a>
 

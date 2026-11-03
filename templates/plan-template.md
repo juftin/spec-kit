@@ -2,7 +2,7 @@
 
 **Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
 
-**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
+**Input**: Feature specification from `/docs/specs/[###-feature-name]/spec.md`
 
 **Note**: This template is filled in by the `__SPECKIT_COMMAND_PLAN__` command; its definition describes the execution workflow.
 
@@ -47,7 +47,7 @@
 ### Documentation (this feature)
 
 ```text
-specs/[###-feature]/
+docs/specs/[###-feature]/
 ├── plan.md              # This file (__SPECKIT_COMMAND_PLAN__ command output)
 ├── research.md          # Phase 0 output (__SPECKIT_COMMAND_PLAN__ command)
 ├── data-model.md        # Phase 1 output (__SPECKIT_COMMAND_PLAN__ command)

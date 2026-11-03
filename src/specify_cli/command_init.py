@@ -357,10 +357,10 @@ def register(app: typer.Typer) -> None:
             help="Authorize executing a reviewed external integration package without prompting.",
         ),
         bare: bool = typer.Option(
-            False,
-            "--bare",
-            "--zero-footprint",
-            help="Initialize project without copying internal scripts, templates, or workflows into the repository.",
+            True,
+            "--bare/--scaffold",
+            "--zero-footprint/--legacy",
+            help="Initialize project in clean zero-clone mode without copying internal scripts, templates, or workflows into the repository (default: True). Pass --scaffold to copy legacy scripts.",
         ),
     ):
         """
