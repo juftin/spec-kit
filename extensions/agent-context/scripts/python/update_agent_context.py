@@ -191,7 +191,7 @@ def _resolve_plan_path(project_root: str) -> str:
         # specs/<scope>/<feature>/plan.md, are still discovered when
         # feature.json is absent (#3024). Mirrors the bash and PowerShell twins.
         candidates = []
-        for p in specs.rglob("plan.md"):
+        for p in (*specs.rglob("plan.md"), *(root / "docs" / "specs").rglob("plan.md")):
             rel = _resolved_rel(p)
             if rel is not None:
                 candidates.append((p, rel))

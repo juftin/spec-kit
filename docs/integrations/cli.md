@@ -547,3 +547,18 @@ Use `upgrade` when you've upgraded Spec Kit and want to refresh an installed int
 ### Do extensions and presets I install apply to every installed integration?
 
 No. Extensions (`specify extension add`) and presets (`specify preset add`) register their command overrides for the currently active (default) integration only, even if other integrations are installed. A non-default integration does not receive those artifacts until it becomes the default: `specify integration use <key>` (or `switch <key>`) rescaffolds every enabled extension and preset for the newly active integration. `specify integration upgrade` follows the same rule — it only re-registers extensions and presets when upgrading the active integration.
+
+## Global Skills
+
+```bash
+specify integration install claude --global
+specify integration upgrade claude -g
+specify integration uninstall claude -g
+```
+
+Global lifecycle commands require an explicit built-in skills integration.
+Workspace command modes such as Copilot `--commands` are rejected. Rendering
+uses `specify` CLI commands, and SHA-256 manifests live in
+`~/.specify/integrations/<key>.manifest.json`. Upgrade refuses modified files
+unless `--force` is supplied; uninstall preserves modified files by default.
+Global installation does not initialize the current project.

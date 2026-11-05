@@ -84,7 +84,8 @@ def test_command_template_not_found_json(tmp_path: Path, monkeypatch: pytest.Mon
     monkeypatch.chdir(tmp_path)
     result = runner.invoke(app, ["template", "non-existent-template-xyz", "--json"])
     assert result.exit_code == 1
-    assert "Error: Template 'non-existent-template-xyz' not found" in result.output
+    assert json.loads(result.stderr) == {"error": "Template 'non-existent-template-xyz' not found"}
+    assert result.stdout == ""
 
 
 def test_command_template_with_init_dir_override(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):

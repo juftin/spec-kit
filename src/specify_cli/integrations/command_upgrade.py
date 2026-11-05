@@ -35,6 +35,7 @@ def integration_upgrade(
     script: str | None = typer.Option(None, "--script", help="Script type: sh, ps, or py (default: from init-options.json or platform default)"),
     integration_options: str | None = typer.Option(None, "--integration-options", help="Options for the integration"),
     trust_integration: bool = typer.Option(False, "--trust-integration", help="Authorize executing a reviewed external integration update without prompting"),
+    global_install: bool = typer.Option(False, "--global", "-g", help="Manage the global skills installation"),
 ):
     """Upgrade an integration by reinstalling with diff-aware file handling.
 
@@ -44,6 +45,11 @@ def integration_upgrade(
     from . import get_integration
     from .manifest import IntegrationManifest
     from .. import _require_specify_project, _install_shared_infra_or_exit, _install_shared_infra
+
+    if global_install:
+        from ._global import global_lifecycle
+        global_lifecycle("upgrade", key, force=force, script=script, integration_options=integration_options)
+        return
 
     project_root = _require_specify_project()
     current = _read_integration_json(project_root)

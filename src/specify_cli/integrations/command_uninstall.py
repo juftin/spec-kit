@@ -18,11 +18,17 @@ from ._helpers import _MANIFEST_READ_ERRORS, _clear_init_options_for_integration
 def integration_uninstall(
     key: str = typer.Argument(None, help="Integration key to uninstall (default: current integration)"),
     force: bool = typer.Option(False, "--force", help="Remove files even if modified"),
+    global_install: bool = typer.Option(False, "--global", "-g", help="Manage the global skills installation"),
 ):
     """Uninstall an integration, safely preserving modified files."""
     from . import get_integration
     from .manifest import IntegrationManifest
     from .. import _require_specify_project
+
+    if global_install:
+        from ._global import global_lifecycle
+        global_lifecycle("uninstall", key, force=force)
+        return
 
     project_root = _require_specify_project()
     current = _read_integration_json(project_root)

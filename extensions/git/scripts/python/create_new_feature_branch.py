@@ -439,10 +439,20 @@ def main(argv: list[str]) -> int:
     project_root = _find_project_root(SCRIPT_DIR)
     core = _load_core_common(project_root)
 
+    bare_root = None
+    if core is None and os.environ.get("SPECIFY_INIT_DIR"):
+        bare_root = Path(os.environ["SPECIFY_INIT_DIR"]).resolve()
+        if not bare_root.is_dir():
+            _err("ERROR: SPECIFY_INIT_DIR does not point to an existing directory")
+            return 1
+        if not (bare_root / ".specify").is_dir():
+            _err("ERROR: SPECIFY_INIT_DIR is not a Spec Kit project (no .specify/ directory)")
+            return 1
+
     # SPECIFY_INIT_DIR is resolved (and validated) by the core resolver. If the
     # core helpers were not found, refuse rather than silently falling back to
     # the wrong root.
-    if os.environ.get("SPECIFY_INIT_DIR") and (
+    if bare_root is None and os.environ.get("SPECIFY_INIT_DIR") and (
         core is None or not hasattr(core, "resolve_specify_init_dir")
     ):
         _err(
@@ -451,7 +461,9 @@ def main(argv: list[str]) -> int:
         )
         return 1
 
-    if core is not None and hasattr(core, "get_repo_root"):
+    if bare_root is not None:
+        repo_root = bare_root
+    elif core is not None and hasattr(core, "get_repo_root"):
         # Pass script path so cwd-outside-repo callers land on the same
         # fallback the bash twin does. Older cores don't accept the kwarg —
         # fall back to the no-arg call for compatibility.
@@ -472,7 +484,7 @@ def main(argv: list[str]) -> int:
 
     has_git_repo = _local_has_git(repo_root)
 
-    specs_dir = repo_root / "specs"
+    specs_dir = repo_root / ("specs" if (repo_root / "specs").is_dir() else "docs/specs")
     config_file = repo_root / ".specify" / "extensions" / "git" / "git-config.yml"
 
     author_token = get_author_token(repo_root)

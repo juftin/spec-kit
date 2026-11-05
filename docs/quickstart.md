@@ -10,7 +10,7 @@ deserves investment, follow the [idea assessment quickstart](guides/assessment.m
 These are independent processes, not prerequisites for this guide.
 
 > [!NOTE]
-> Automation scripts are provided as Bash (`.sh`), PowerShell (`.ps1`), and Python (`.py`) variants. Interactive `specify init` prompts you to choose one; non-interactive runs (no TTY, or `--non-interactive`) default to a shell variant for your OS. Pass `--script sh|ps|py` to select explicitly.
+> Automation scripts are provided as Bash (`.sh`), PowerShell (`.ps1`), and Python (`.py`) variants. Interactive `specify init --scaffold` prompts you to choose one; bare mode skips script selection; non-interactive runs (no TTY, or `--non-interactive`) default to a shell variant for your OS. Pass `--script sh|ps|py` to select explicitly.
 
 The process steps here use GitHub Copilot's default skills mode (`/speckit-*`).
 For other agents or modes, see
@@ -51,10 +51,10 @@ starting either path.
 
 ### Install Specify
 
-**In your terminal**, install the CLI from PyPI (requires [uv](install/uv.md)), then initialize your project:
+**In your terminal**, install this fork's CLI from Git (requires [uv](install/uv.md)), then initialize your project:
 
 ```bash
-uv tool install specify-cli
+uv tool install specify-cli --from git+https://github.com/juftin/spec-kit.git
 specify init taskify --integration copilot
 cd taskify
 ```

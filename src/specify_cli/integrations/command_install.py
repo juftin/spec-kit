@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import os
-from pathlib import Path
 
 import typer
 from rich.markup import escape
@@ -46,31 +45,8 @@ def integration_install(
         raise typer.Exit(1)
 
     if global_install:
-        target_root = Path.home()
-        raw_options, parsed_options = _resolve_integration_options(
-            integration, {}, key, integration_options
-        )
-        selected_script = script or ("ps" if os.name == "nt" else "sh")
-        manifest = IntegrationManifest(
-            integration.key, target_root, version=_get_speckit_version()
-        )
-        from ..events import resolve_events
-
-        events_map = resolve_events(
-            integration.key,
-            integration.config,
-            target_root,
-            parsed_options,
-        )
-        integration.setup(
-            target_root,
-            manifest,
-            parsed_options=parsed_options,
-            script_type=selected_script,
-            raw_options=raw_options,
-            events=events_map,
-        )
-        console.print(f"Integration '{key}' installed globally in {target_root}")
+        from ._global import global_lifecycle
+        global_lifecycle("install", key, force=force, script=script, integration_options=integration_options)
         return
 
     from .. import _require_specify_project, _install_shared_infra_or_exit

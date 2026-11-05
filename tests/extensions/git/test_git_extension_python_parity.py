@@ -534,7 +534,7 @@ class TestCreateFeatureBranchParity:
         assert p.returncode == 0
         assert json.loads(p.stdout)["FEATURE_NUM"] == "008"
 
-    def test_specify_init_dir_without_core_errors(self, tmp_path: Path):
+    def test_specify_init_dir_without_core_supported(self, tmp_path: Path):
         _, py_proj = _twin_projects(tmp_path)
         (
             py_proj / ".specify" / "scripts" / "python" / "common.py"
@@ -544,8 +544,8 @@ class TestCreateFeatureBranchParity:
             "--json", "desc word",
             env_extra={"SPECIFY_INIT_DIR": str(py_proj)},
         )
-        assert p.returncode == 1
-        assert "SPECIFY_INIT_DIR requires updated Spec Kit core scripts" in p.stderr
+        assert p.returncode == 0, p.stderr
+        assert "BRANCH_NAME" in p.stdout
 
 
 @requires_bash

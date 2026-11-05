@@ -11,22 +11,20 @@
 ## Installation
 
 > [!IMPORTANT]
-> Spec Kit is distributed through two official channels, both published and maintained by the Spec Kit maintainers: the [github/spec-kit](https://github.com/github/spec-kit) GitHub repository (source installs) and the [`specify-cli`](https://pypi.org/project/specify-cli/) package on [PyPI](https://pypi.org/project/specify-cli/). Either route is supported for normal installs — use the commands shown below. After installing, run `specify version` as a local version/runtime sanity check. It confirms that the `specify` command is available and reports its version, but it does not prove whether the executable came from PyPI or GitHub. For offline or air-gapped environments, locally built wheels created from this repository are also valid.
-
-Spec Kit supports two install routes:
-
-1. **Install from source (GitHub)** — the recommended route, pinned to a release tag.
-2. **Install from PyPI** — install the published `specify-cli` package with your usual Python tooling.
+> This fork is distributed from [juftin/spec-kit](https://github.com/juftin/spec-kit).
+> The PyPI package `specify-cli` tracks upstream `github/spec-kit` and does not
+> install this fork. Use the Git install below or install global agent skills
+> with `npx skills add juftin/spec-kit -g`.
 
 ### Install from Source — Persistent Installation (Recommended)
 
-Install once and use everywhere. Replace `vX.Y.Z` with a release tag from [Releases](https://github.com/github/spec-kit/releases) — keep the leading `v` (for example, `v0.12.11`, not `0.12.11`):
+Install once and use everywhere. Replace `vX.Y.Z` with a release tag from [Releases](https://github.com/juftin/spec-kit/releases) — keep the leading `v` (for example, `v0.12.11`, not `0.12.11`):
 
 > [!NOTE]
 > The command below requires **[uv](https://docs.astral.sh/uv/)**. If you see `command not found: uv`, [install uv first](./install/uv.md).
 
 ```bash
-uv tool install specify-cli --from git+https://github.com/github/spec-kit.git@vX.Y.Z
+uv tool install specify-cli --from git+https://github.com/juftin/spec-kit.git@vX.Y.Z
 ```
 
 Then initialize a project:
@@ -35,24 +33,18 @@ Then initialize a project:
 specify init <PROJECT_NAME> --integration copilot
 ```
 
-### Install from PyPI
-
-Spec Kit is also published to PyPI as [`specify-cli`](https://pypi.org/project/specify-cli/), so you can install it with your preferred Python package manager without referencing the Git URL:
+### Global Skills Without Project Initialization
 
 ```bash
-# Using uv (recommended)
-uv tool install specify-cli
-
-# Or using pipx
-pipx install specify-cli
-
-# Or using pip
-pip install specify-cli
+npx skills add juftin/spec-kit -g
+# Or, after installing this fork's CLI:
+specify integration install claude --global
 ```
 
-If `specify-cli` is already installed, these commands keep the installed version, even when a newer release exists. Compare the version shown by `specify version` with the [latest version on PyPI](https://pypi.org/project/specify-cli/). To replace an older install, use the same tool as the original install: `uv tool install --force specify-cli`, `pipx install --force specify-cli` or `pip install --upgrade specify-cli`. A different tool can install a second copy and leave the old `specify` first on `PATH`. An old CLI can't set up projects from current releases: with 0.1.6, for example, `specify init --integration ...` fails with `No such option: --integration`, and `specify init --ai ...` fails with `No matching release asset found`.
-
-To install a specific release, pin the version — for example `uv tool install specify-cli==0.12.11`. See the [PyPI installation guide](install/pypi.md) for details, including how to upgrade and how to [install from a custom or private package index](install/pypi.md#install-from-a-custom-or-private-package-index).
+These routes install skills in your home directory. Project-local `specify init`
+keeps lightweight `.specify/` state and agent files; bare mode omits helper
+scripts, template copies, and workflow copies. Feature operations still create
+specifications under `docs/specs/`.
 
 ### One-time Usage
 
@@ -60,7 +52,7 @@ Run directly without installing — see the [One-time usage (uvx)](install/one-t
 
 ### Alternative Package Managers
 
-- **PyPI** — see the [PyPI installation guide](install/pypi.md)
+- **PyPI** — upstream only; use the Git URL above for this fork
 - **pipx** — see the [pipx installation guide](install/pipx.md)
 - **Enterprise / Air-Gapped** — see the [air-gapped installation guide](install/air-gapped.md)
 
@@ -87,16 +79,17 @@ syntax used by each agent and mode.
 
 ### Clean Repository & Zero-Footprint Initialization
 
-By default, `specify init` operates in **zero-clone / zero-footprint** (`--bare`) mode when `--script` is omitted:
+By default, `specify init` operates in **bare** (`--bare`) mode when `--script` is omitted:
 
 ```bash
 specify init . --integration copilot
 ```
 
 In default zero-footprint mode:
+
 - No `.specify/scripts/` or `.specify/templates/` are copied to your project.
 - Spec Kit commands resolve bundled templates in memory directly from the installed package (`specify template`, `specify feature`, `specify plan`, `specify tasks`).
-- Your project tree stays completely clean, with specifications organized under `docs/specs/`.
+- Lightweight `.specify/` metadata and agent files remain; specifications use `docs/specs/`.
 - Pass `--scaffold` (or `--script sh|ps|py`) if you want to copy legacy helper scripts into `.specify/`.
 
 ### Local Development / Editable Installation
@@ -130,7 +123,7 @@ Auto behavior:
 
 - Windows default: `ps`
 - Other OS default: `sh`
-- Interactive mode: you'll be prompted unless you pass `--script`
+- Interactive scaffold mode: you will be prompted unless you pass `--script`; bare mode skips script selection
 
 Force a specific script type:
 

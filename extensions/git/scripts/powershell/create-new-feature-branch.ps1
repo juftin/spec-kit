@@ -261,6 +261,9 @@ if (Get-Command Test-HasGit -ErrorAction SilentlyContinue) {
 Set-Location $repoRoot
 
 $specsDir = Join-Path $repoRoot 'specs'
+if (-not (Test-Path -LiteralPath $specsDir -PathType Container)) {
+    $specsDir = Join-Path $repoRoot 'docs/specs'
+}
 $configFile = Join-Path $repoRoot ".specify/extensions/git/git-config.yml"
 
 function Read-GitConfigValue {

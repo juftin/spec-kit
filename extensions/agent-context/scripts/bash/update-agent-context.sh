@@ -327,7 +327,7 @@ def _resolved_rel(p):
 # created via SPECIFY_FEATURE_DIRECTORY, e.g. specs/<scope>/<feature>/plan.md,
 # are still discovered when feature.json is absent (#3024).
 candidates = []
-for p in specs.rglob("plan.md"):
+for p in (*specs.rglob("plan.md"), *(root / "docs" / "specs").rglob("plan.md")):
     rel = _resolved_rel(p)
     if rel:
         candidates.append((p, rel))
