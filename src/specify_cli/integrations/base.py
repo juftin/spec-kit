@@ -883,6 +883,31 @@ class IntegrationBase(ABC):
             return False
 
     @staticmethod
+    def resolve_bare_script_command(script_commands: dict[str, str]) -> str | None:
+        """Translate known core helpers, including Windows PowerShell 5.1 flags."""
+        if "cli" in script_commands:
+            return script_commands["cli"]
+        for command in script_commands.values():
+            normalized = command
+            for ps, cli in (("Json", "json"), ("RequireSpec", "require-spec"),
+                            ("RequireTasks", "require-tasks"), ("IncludeTasks", "include-tasks"),
+                            ("PathsOnly", "paths-only"), ("Template", "template")):
+                normalized = re.sub(r"(?<!\S)-" + ps + r"\b", "--" + cli, normalized, flags=re.I)
+            match = re.search(r"(resolve[-_]template|setup[-_]plan|setup[-_]tasks|check[-_]prerequisites)\.(?:sh|ps1|py)\s*(.*)", normalized)
+            if not match:
+                continue
+            helper, args = match.groups()
+            helper = helper.replace("_", "-")
+            if helper == "resolve-template":
+                return f"specify template {args}".strip()
+            if helper == "setup-plan":
+                return "specify plan setup --json"
+            if helper == "setup-tasks":
+                return "specify tasks setup --json"
+            return f"specify feature check {args}".strip()
+        return None
+
+    @staticmethod
     def process_template(
         content: str,
         agent_name: str,
@@ -944,34 +969,7 @@ class IntegrationBase(ABC):
                 selected_script_type = "cli"
                 script_command = script_commands["cli"]
             else:
-                found_cli = None
-                for candidate_cmd in script_commands.values():
-                    m = re.search(
-                        r"resolve[-_]template(?:\.sh|\.ps1|\.py)?\s+([A-Za-z0-9_-]+)",
-                        candidate_cmd,
-                    )
-                    if m:
-                        found_cli = f"specify template {m.group(1)} --json"
-                        break
-                    if "setup-plan" in candidate_cmd or "setup_plan" in candidate_cmd:
-                        found_cli = "specify plan setup --json"
-                        break
-                    if "setup-tasks" in candidate_cmd or "setup_tasks" in candidate_cmd:
-                        found_cli = "specify tasks setup --json"
-                        break
-                    for marker in ("check-prerequisites.sh", "check_prerequisites.py"):
-                        if marker in candidate_cmd:
-                            args_part = candidate_cmd.split(marker, 1)[-1].strip()
-                            found_cli = (
-                                f"specify feature check {args_part}".strip()
-                            )
-                            break
-                    if found_cli:
-                        break
-                    m2 = re.search(r"--template\s+([A-Za-z0-9_-]+)", candidate_cmd)
-                    if m2:
-                        found_cli = f"specify template {m2.group(1)} --json"
-                        break
+                found_cli = IntegrationBase.resolve_bare_script_command(script_commands)
                 if found_cli:
                     selected_script_type = "cli"
                     script_command = found_cli
@@ -1265,6 +1263,7 @@ class MarkdownIntegration(IntegrationBase):
             processed = self.process_template(
                 raw, self.key, script_type, arg_placeholder,
                 project_root=project_root,
+                bare=opts.get("bare", False),
             )
             dst_name = self.command_filename(src_file.stem)
             dst_file = self.write_file_and_record(
@@ -1481,6 +1480,7 @@ class TomlIntegration(IntegrationBase):
             processed = self.process_template(
                 raw, self.key, script_type, arg_placeholder,
                 project_root=project_root,
+                bare=opts.get("bare", False),
             )
             _, body = self._split_frontmatter(processed)
             toml_content = self._render_toml(description, body)
@@ -1722,6 +1722,7 @@ class YamlIntegration(IntegrationBase):
             processed = self.process_template(
                 raw, self.key, script_type, arg_placeholder,
                 project_root=project_root,
+                bare=opts.get("bare", False),
             )
             _, body = self._split_frontmatter(processed)
             yaml_content = self._render_yaml(

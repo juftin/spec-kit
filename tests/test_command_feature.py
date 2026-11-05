@@ -112,7 +112,7 @@ def test_feature_current_no_feature_json(tmp_path: Path, monkeypatch: pytest.Mon
     monkeypatch.chdir(tmp_path)
     result = runner.invoke(app, ["feature", "current"])
     assert result.exit_code == 1
-    assert "Error: No active feature found" in result.output
+    assert "Error: Not a Spec Kit project" in result.output
 
 
 def test_feature_current_json_output(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
@@ -146,9 +146,10 @@ def test_feature_check_prerequisites_and_template(tmp_path: Path, monkeypatch: p
     res_no_plan = runner.invoke(app, ["feature", "check", "--json"])
     assert res_no_plan.exit_code == 1
 
-    # Setup plan and tasks
+    # Set up the plan; the agent writes the generated tasks
     runner.invoke(app, ["plan", "setup"])
     runner.invoke(app, ["tasks", "setup"])
+    (tmp_path / "docs/specs/001-search-api/tasks.md").write_text("# Generated tasks\n")
 
     res_ok = runner.invoke(
         app,

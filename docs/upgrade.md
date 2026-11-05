@@ -10,8 +10,8 @@
 |----------------|---------|-------------|
 | **CLI Tool (recommended)** | `specify self upgrade` | Latest stable release, in place. Auto-detects whether you installed via `uv tool` or `pipx`. |
 | **CLI Tool — pin a version** | `specify self upgrade --tag vX.Y.Z[suffix]` | Upgrade to a specific release tag instead of the latest stable. Suffixes are limited to dev, alpha/beta/rc, and/or build metadata forms. |
-| **CLI Tool — manual fallback** | `uv tool install specify-cli --force --from git+https://github.com/github/spec-kit.git@vX.Y.Z` | When `specify self upgrade` isn't available (older installs) or when you want explicit control. |
-| **CLI Tool — manual fallback (pipx)** | `pipx install --force git+https://github.com/github/spec-kit.git@vX.Y.Z` | Same as above, for pipx installs. |
+| **CLI Tool — manual fallback** | `uv tool install specify-cli --force --from git+https://github.com/juftin/spec-kit.git@vX.Y.Z` | When `specify self upgrade` isn't available (older installs) or when you want explicit control. |
+| **CLI Tool — manual fallback (pipx)** | `pipx install --force git+https://github.com/juftin/spec-kit.git@vX.Y.Z` | Same as above, for pipx installs. |
 | **Project Files** | Run `specify integration upgrade <key>`, then `specify extension update` | Refresh installed integration files and extensions in your project |
 | **Both** | Run CLI upgrade, then project update | Recommended for major version updates |
 
@@ -21,9 +21,8 @@
 
 The CLI tool (`specify`) is separate from your project files. Upgrade it to get the latest features and bug fixes.
 
-If you installed from PyPI and want to keep that install route, follow the
-[PyPI upgrade instructions](install/pypi.md#upgrade). Repeating
-`uv tool install specify-cli` does not upgrade an existing installation.
+To keep this fork, reinstall from `git+https://github.com/juftin/spec-kit.git`
+or use `specify self upgrade`. The PyPI package tracks upstream.
 
 ### Recommended: `specify self upgrade`
 
@@ -53,10 +52,10 @@ If your installed CLI is older than the release that introduced `specify self up
 
 ### If you installed with `uv tool install`
 
-Upgrade to a specific release (check [Releases](https://github.com/github/spec-kit/releases) for the latest tag):
+Upgrade to a specific release (check [Releases](https://github.com/juftin/spec-kit/releases) for the latest tag):
 
 ```bash
-uv tool install specify-cli --force --from git+https://github.com/github/spec-kit.git@vX.Y.Z
+uv tool install specify-cli --force --from git+https://github.com/juftin/spec-kit.git@vX.Y.Z
 ```
 
 ### If you use one-shot `uvx` commands
@@ -64,7 +63,7 @@ uv tool install specify-cli --force --from git+https://github.com/github/spec-ki
 Specify the desired release tag:
 
 ```bash
-uvx --from git+https://github.com/github/spec-kit.git@vX.Y.Z specify init --here --integration copilot
+uvx --from git+https://github.com/juftin/spec-kit.git@vX.Y.Z specify init --here --integration copilot
 ```
 
 `uvx` runs a temporary copy of Spec Kit for that single command. It does not update a persistent `specify` installed with `uv tool install`, `pipx`, or another tool manager. If a newer feature works through `uvx` but your local `specify` still reports an older version, upgrade the persistent CLI with the command that matches your install method.
@@ -74,7 +73,7 @@ uvx --from git+https://github.com/github/spec-kit.git@vX.Y.Z specify init --here
 Upgrade to a specific release:
 
 ```bash
-pipx install --force git+https://github.com/github/spec-kit.git@vX.Y.Z
+pipx install --force git+https://github.com/juftin/spec-kit.git@vX.Y.Z
 ```
 
 ### Verify the upgrade
@@ -109,13 +108,13 @@ The integration upgrade command uses the install manifest to detect local edits.
 
 These files are **never touched** by the manifest-aware integration/extension upgrade path:
 
-- ✅ **Your specifications** (`specs/001-my-feature/spec.md`, etc.) - **CONFIRMED SAFE**
-- ✅ **Your implementation plans** (`specs/001-my-feature/plan.md`, `tasks.md`, etc.) - **CONFIRMED SAFE**
+- ✅ **Your specifications** (`docs/specs/001-my-feature/spec.md`, etc.) - **CONFIRMED SAFE**
+- ✅ **Your implementation plans** (`docs/specs/001-my-feature/plan.md`, `tasks.md`, etc.) - **CONFIRMED SAFE**
 - ✅ **Your constitution** (`.specify/memory/constitution.md`) when using `specify integration upgrade`
 - ✅ **Your source code** - **CONFIRMED SAFE**
 - ✅ **Your git history** - **CONFIRMED SAFE**
 
-The `specs/` directory is completely excluded from template packages and will never be modified during upgrades.
+The `docs/specs/` directory is completely excluded from template packages and will never be modified during upgrades.
 
 ### 1. Check installed integrations
 
@@ -353,10 +352,10 @@ Projects that do not use Git can still work with Spec Kit by setting `SPECIFY_FE
 
 ```bash
 # Bash/Zsh
-export SPECIFY_FEATURE_DIRECTORY="specs/001-my-feature"
+export SPECIFY_FEATURE_DIRECTORY="docs/specs/001-my-feature"
 
 # PowerShell
-$env:SPECIFY_FEATURE_DIRECTORY = "specs/001-my-feature"
+$env:SPECIFY_FEATURE_DIRECTORY = "docs/specs/001-my-feature"
 ```
 
 Alternatively, run the `/speckit.specify` command which creates `.specify/feature.json` automatically.
@@ -431,7 +430,7 @@ Only Spec Kit infrastructure files:
 
 **What stays untouched:**
 
-- Your `specs/` directory (specifications, plans, tasks)
+- Your `docs/specs/` directory (specifications, plans, tasks)
 - Your source code files
 - Your `.git/` directory and git history
 - Any other files not part of Spec Kit templates
@@ -486,7 +485,7 @@ If not found, reinstall:
 
 ```bash
 uv tool uninstall specify-cli
-uv tool install specify-cli --from git+https://github.com/github/spec-kit.git
+uv tool install specify-cli --from git+https://github.com/juftin/spec-kit.git
 ```
 
 ### "Do I need to run specify every time I open my project?"
@@ -553,6 +552,16 @@ Spec Kit follows semantic versioning for major releases. The CLI and project fil
 After upgrading:
 
 - **Test new slash commands:** Run `/speckit.constitution` or another command to verify everything works
-- **Review release notes:** Check [GitHub Releases](https://github.com/github/spec-kit/releases) for new features and breaking changes
+- **Review release notes:** Check [GitHub Releases](https://github.com/juftin/spec-kit/releases) for new features and breaking changes
 - **Update workflows:** If new commands were added, update your team's development workflows
 - **Check documentation:** Visit [github.io/spec-kit](https://github.github.io/spec-kit/) for updated guides
+
+## Fork and Global Skill Updates
+
+`specify self check` and `specify self upgrade` use `juftin/spec-kit` by default.
+Downstream forks can set `SPECIFY_UPGRADE_REPO=owner/repository` for both release
+checks and Git upgrade targets. PyPI `specify-cli` follows upstream; keep the
+Git source when reinstalling this fork.
+
+Refresh global skills with `specify integration upgrade claude --global` (or
+rerun `npx skills add juftin/spec-kit -g` for skills installed with npx).

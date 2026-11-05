@@ -18,7 +18,7 @@ def test_plan_setup_no_active_feature(tmp_path: Path, monkeypatch: pytest.Monkey
     monkeypatch.chdir(tmp_path)
     result = runner.invoke(app, ["plan", "setup"])
     assert result.exit_code == 1
-    assert "Error: No active feature found" in result.output
+    assert "Error: Not a Spec Kit project" in result.output
 
 
 def test_plan_setup_missing_spec_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
@@ -62,7 +62,7 @@ def test_plan_setup_idempotent_no_overwrite(tmp_path: Path, monkeypatch: pytest.
 
     result = runner.invoke(app, ["plan", "setup"])
     assert result.exit_code == 0
-    assert "skipping template copy" in result.output
+    assert "FEATURE_DIR:" in result.output
     assert plan_file.read_text(encoding="utf-8") == "# My Custom Existing Plan\n"
 
 
@@ -84,7 +84,7 @@ def test_tasks_setup_no_active_feature(tmp_path: Path, monkeypatch: pytest.Monke
     monkeypatch.chdir(tmp_path)
     result = runner.invoke(app, ["tasks", "setup"])
     assert result.exit_code == 1
-    assert "Error: No active feature found" in result.output
+    assert "Error: Not a Spec Kit project" in result.output
 
 
 def test_tasks_setup_missing_plan_file(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
@@ -97,8 +97,8 @@ def test_tasks_setup_missing_plan_file(tmp_path: Path, monkeypatch: pytest.Monke
     assert "Error: plan.md not found" in result.output
 
 
-def test_tasks_setup_creates_tasks(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    """tasks setup creates tasks.md when plan.md exists."""
+def test_tasks_setup_returns_template_without_writing_tasks(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """tasks setup leaves task creation to the agent."""
     monkeypatch.chdir(tmp_path)
     runner.invoke(app, ["feature", "init", "payment-flow"])
     runner.invoke(app, ["plan", "setup"])
@@ -107,8 +107,8 @@ def test_tasks_setup_creates_tasks(tmp_path: Path, monkeypatch: pytest.MonkeyPat
     assert result.exit_code == 0
 
     tasks_file = tmp_path / "docs" / "specs" / "001-payment-flow" / "tasks.md"
-    assert tasks_file.is_file()
-    assert "# Tasks:" in tasks_file.read_text(encoding="utf-8")
+    assert not tasks_file.exists()
+    assert "TASKS_TEMPLATE:" in result.output
 
 
 def test_tasks_setup_idempotent_no_overwrite(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
@@ -123,7 +123,7 @@ def test_tasks_setup_idempotent_no_overwrite(tmp_path: Path, monkeypatch: pytest
 
     result = runner.invoke(app, ["tasks", "setup"])
     assert result.exit_code == 0
-    assert "skipping template copy" in result.output
+    assert "FEATURE_DIR:" in result.output
     assert tasks_file.read_text(encoding="utf-8") == "# My Custom Tasks\n"
 
 
@@ -138,7 +138,7 @@ def test_tasks_setup_json_output(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     data = json.loads(result.output)
     assert data["feature_directory"] == "docs/specs/001-security-audit"
     assert data["tasks_file"] == "docs/specs/001-security-audit/tasks.md"
-    assert data["created"] is True
+    assert data["created"] is False
 
 
 def test_full_sdd_flow(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
@@ -160,7 +160,7 @@ def test_full_sdd_flow(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     # 3. Tasks setup
     res_tasks = runner.invoke(app, ["tasks", "setup"])
     assert res_tasks.exit_code == 0
-    assert (feat_dir / "tasks.md").is_file()
+    assert not (feat_dir / "tasks.md").exists()
 
     # 4. Verify feature current
     res_curr = runner.invoke(app, ["feature", "current"])

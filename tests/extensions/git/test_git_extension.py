@@ -608,9 +608,9 @@ class TestCreateFeatureBash:
         assert data.get("DRY_RUN") is True
         assert not (project / "specs" / data["BRANCH_NAME"]).exists()
 
-    def test_specify_init_dir_without_core_errors(self, tmp_path: Path):
+    def test_specify_init_dir_without_core_supported(self, tmp_path: Path):
         """With no core scripts (only git-common.sh loaded), a set SPECIFY_INIT_DIR
-        hard-errors instead of silently falling back to the walk-up project root."""
+        uses the bundled resolver and honors the explicit project root."""
         project = _setup_project(tmp_path, git=False)
         # Simulate a no-core install: drop core common.sh so only git-common.sh loads.
         (project / "scripts" / "bash" / "common.sh").unlink()
@@ -619,8 +619,8 @@ class TestCreateFeatureBash:
             "--json", "--short-name", "x", "X feature",
             env_extra={"SPECIFY_INIT_DIR": str(project)},
         )
-        assert result.returncode != 0
-        assert "requires updated Spec Kit core scripts" in result.stderr
+        assert result.returncode == 0, result.stderr
+        assert "BRANCH_NAME" in result.stdout
 
     def test_specify_init_dir_with_stale_core_errors(self, tmp_path: Path):
         """With an older core common.sh, a set SPECIFY_INIT_DIR must hard-error
@@ -949,9 +949,9 @@ class TestCreateFeaturePowerShell:
         assert "BRANCH_NAME" in data
         assert "FEATURE_NUM" in data
 
-    def test_specify_init_dir_without_core_errors(self, tmp_path: Path):
+    def test_specify_init_dir_without_core_supported(self, tmp_path: Path):
         """With no core scripts (only git-common.ps1 loaded), a set SPECIFY_INIT_DIR
-        hard-errors instead of silently falling back to the walk-up project root."""
+        uses the bundled resolver and honors the explicit project root."""
         project = _setup_project(tmp_path, git=False)
         (project / "scripts" / "powershell" / "common.ps1").unlink()
         script = project / ".specify" / "extensions" / "git" / "scripts" / "powershell" / "create-new-feature-branch.ps1"
@@ -963,8 +963,8 @@ class TestCreateFeaturePowerShell:
             text=True,
             env=env,
         )
-        assert result.returncode != 0
-        assert "requires updated Spec Kit core scripts" in result.stderr
+        assert result.returncode == 0, result.stderr
+        assert "BRANCH_NAME" in result.stdout
 
     def test_specify_init_dir_with_stale_core_errors(self, tmp_path: Path):
         """With an older core common.ps1, a set SPECIFY_INIT_DIR must hard-error

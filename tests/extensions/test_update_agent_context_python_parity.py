@@ -583,3 +583,17 @@ def test_python_upsert_matches_powershell(tmp_path: Path) -> None:
 
     assert ps.returncode == py.returncode == 0, ps.stderr + py.stderr
     assert (repo_a / "AGENTS.md").read_bytes() == (repo_b / "AGENTS.md").read_bytes()
+
+
+@requires_posix_bash
+def test_docs_specs_mtime_fallback_matches_bash(tmp_path):
+    roots = twin_projects(tmp_path, context_file="CLAUDE.md")
+    for root in roots:
+        plan = root / "docs/specs/001-auth/plan.md"
+        plan.parent.mkdir(parents=True)
+        plan.write_text("# Plan\n")
+    bash_result = run_bash(roots[0])
+    python_result = run_python(roots[1])
+    assert bash_result.returncode == python_result.returncode == 0
+    for root in roots:
+        assert "docs/specs/001-auth/plan.md" in (root / "CLAUDE.md").read_text()

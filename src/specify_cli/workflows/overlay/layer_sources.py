@@ -231,7 +231,11 @@ class BaseWorkflowSource:
         if path.is_symlink():
             raise OverlayLoadError(path, ["Symlinked workflow files are not allowed"])
         if not path.is_file():
-            return []
+            from .._bundled import bundled_workflow
+            bundled = bundled_workflow(self.project_root, workflow_id)
+            if bundled is None:
+                return []
+            path = bundled / "workflow.yml"
         # The base layer is represented by an Overlay with empty edits.
         overlay = Overlay(
             id=workflow_id,

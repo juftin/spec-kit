@@ -54,3 +54,36 @@ check_feature_branch() {
 
     return 0
 }
+
+
+resolve_specify_init_dir() {
+    local init_root
+    # Normalize: relative paths resolve against $(pwd); a trailing slash collapses.
+    # CDPATH="" so a relative value cannot be resolved against the caller's CDPATH
+    # (which would also echo to stdout and corrupt the captured path).
+    if ! init_root="$(CDPATH="" cd -- "$SPECIFY_INIT_DIR" 2>/dev/null && pwd)"; then
+        echo "ERROR: SPECIFY_INIT_DIR does not point to an existing directory: $SPECIFY_INIT_DIR" >&2
+        return 1
+    fi
+    if [[ ! -d "$init_root/.specify" ]]; then
+        echo "ERROR: SPECIFY_INIT_DIR is not a Spec Kit project (no .specify/ directory): $init_root" >&2
+        return 1
+    fi
+    printf '%s\n' "$init_root"
+}
+
+get_repo_root() {
+    if [[ -n "${SPECIFY_INIT_DIR:-}" ]]; then
+        resolve_specify_init_dir
+        return
+    fi
+    local current="$PWD"
+    while [[ "$current" != / ]]; do
+        if [[ -d "$current/.specify" ]]; then
+            printf '%s\n' "$current"
+            return
+        fi
+        current=$(dirname "$current")
+    done
+    git rev-parse --show-toplevel
+}

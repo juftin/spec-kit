@@ -425,7 +425,7 @@ if (-not $PlanPath) {
     # Fall back to mtime only when feature.json is absent or its plan does not exist yet.
     if (-not $PlanPath) {
         try {
-            $specsDir = Join-Path $ProjectRoot 'specs'
+            $specsDir = @((Join-Path $ProjectRoot 'specs'), (Join-Path $ProjectRoot 'docs/specs'))
             # Recurse (rather than the old one-level specs/*/plan.md scan) so scoped
             # layouts created via SPECIFY_FEATURE_DIRECTORY, e.g.
             # specs/<scope>/<feature>/plan.md, are still discovered when

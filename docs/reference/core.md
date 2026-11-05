@@ -13,13 +13,15 @@ specify init [<project_name>]
 | `--integration <key>`    | AI coding agent integration to use (e.g. `copilot`, `claude`, `gemini`). See the [integration directory](../integrations/index.md) for all available keys |
 | `--integration-options`  | Options for the integration (e.g. `--integration-options="--commands-dir .myagent/cmds"`) |
 | `--script sh\|ps\|py`    | Script type: `sh` (bash/zsh), `ps` (PowerShell), or `py` (Python)       |
+| `--bare`                 | Resolve templates and helpers from the installed package (default) |
+| `--scaffold`             | Copy templates, helper scripts, and workflows into the project |
 | `--here`                 | Initialize in the current directory instead of creating a new one        |
 | `--force`                | Force merge/overwrite when initializing in an existing directory         |
 | `--allow-symlinks`       | Persist permission for contained symlinks in migrated FileHelper operations; default is deny |
 | `--ignore-agent-tools`   | Skip checks for AI coding agent CLI tools                                |
 | `--preset <id>`          | Install a preset during initialization                                   |
 
-Creates a new Spec Kit project with the necessary directory structure, templates, scripts, and AI coding agent integration files.
+Creates a bare Spec Kit project with lightweight metadata and agent files. Add `--scaffold` to copy templates, scripts, and workflows.
 
 > [!NOTE]
 > Git repository initialization and branching are managed by the **git extension**, which is not installed by default. Run `specify extension add git` after init to enable git workflows.
@@ -177,3 +179,29 @@ Starts the experimental stdio-only MCP server. The initial server exposes only
 the stable `version` JSON command through generic list, describe, and run tools.
 See the [MCP Server reference](mcp.md) for the tool names, result contract, and
 current limitations.
+
+## Bare Mode and SDD Commands
+
+Install this fork with `uv tool install specify-cli --from git+https://github.com/juftin/spec-kit.git`.
+PyPI `specify-cli` tracks upstream. `specify init` defaults to `--bare`, keeping
+lightweight `.specify/` state and agent files. `--scaffold` copies templates,
+scripts, and workflows; `--script sh|ps|py` also selects scaffold mode unless
+`--bare` is explicit. Interactive bare initialization skips the script picker.
+
+| Command | Options and result |
+| --- | --- |
+| `specify template NAME` | Raw Markdown; `--json` returns `TEMPLATE_NAME`, `TEMPLATE_CONTENT` |
+| `specify feature init NAME` | `--timestamp`, `--number N`, `--short-name NAME`, `--dry-run`, `--allow-existing-branch`; never overwrites `spec.md` |
+| `specify feature current` | Active `feature_directory` |
+| `specify feature check` | `--require-spec`, `--require-tasks`, `--include-tasks`, `--paths-only`, `--template NAME` |
+| `specify plan setup` | Creates a missing plan; returns `FEATURE_SPEC`, `IMPL_PLAN`, `FEATURE_DIR`, `BRANCH` |
+| `specify tasks setup` | Requires spec and plan; returns `TASKS_TEMPLATE`, `TASKS_TEMPLATE_CONTENT`, `FEATURE_DIR`, `AVAILABLE_DOCS`; the agent writes `tasks.md` |
+
+All feature, plan, and tasks commands accept `--json`. Failures exit 1 and emit
+`{"error": "message"}` on stderr in JSON mode. Projects are discovered upward
+from the working directory; `SPECIFY_INIT_DIR` takes precedence.
+`SPECIFY_FEATURE_DIRECTORY` overrides `.specify/feature.json`;
+`SPECIFY_FEATURE_NO_PERSIST=1` or `true` prevents activation writes, and
+`SPECIFY_FEATURE` overrides the reported branch. Features use `docs/specs/`
+unless a legacy root `specs/` already exists. Timestamp numbering may also be
+configured with `feature_numbering: timestamp` in `.specify/init-options.json`.

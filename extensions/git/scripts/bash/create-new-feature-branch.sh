@@ -300,6 +300,9 @@ fi
 cd "$REPO_ROOT"
 
 SPECS_DIR="$REPO_ROOT/specs"
+if [[ ! -d "$SPECS_DIR" ]]; then
+    SPECS_DIR="$REPO_ROOT/docs/specs"
+fi
 CONFIG_FILE="$REPO_ROOT/.specify/extensions/git/git-config.yml"
 
 read_git_config_value() {

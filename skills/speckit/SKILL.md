@@ -5,15 +5,16 @@ argument-hint: "Ask about specify CLI commands, installation, or SDD workflow"
 compatibility: "Works with specify CLI (installed via uv tool install or run on the fly via uvx)"
 metadata:
   author: "github-spec-kit"
-  source: "README.md"
+  source: "templates/skills/speckit.md"
 user-invocable: true
 disable-model-invocation: false
 ---
 
 # Spec Kit (`specify` CLI) Reference & Guide
 
-Spec Kit is a **zero-clone, zero-footprint** toolkit for Spec-Driven Development (SDD).
-- **Zero repository pollution**: You never need to clone the `spec-kit` repo into a project, and `specify init` does **not** copy internal shell scripts (`.specify/scripts/`), templates (`.specify/templates/`), or workflows into your repository.
+Spec Kit is a **zero-clone** toolkit for Spec-Driven Development (SDD).
+
+- **Bare project initialization**: `specify init` keeps lightweight metadata and agent files. It resolves helper scripts, templates, and workflows from the installed package. Global skill installation skips project initialization.
 - **Clean specification directory**: All feature specifications, implementation plans, and task lists live under `docs/specs/<NNN>-<feature-name>/` (with automatic fallback to `specs/` if already present in the repository root).
 - **Direct CLI execution**: All templates and feature state are resolved in memory directly by the `specify` CLI.
 
@@ -24,17 +25,21 @@ Spec Kit is a **zero-clone, zero-footprint** toolkit for Spec-Driven Development
 If `specify` is not yet installed on `PATH`, install it or run it ephemerally with `uv`:
 
 ### Option A: Install Globally with `uv` (Recommended)
+
 ```bash
 uv tool install specify-cli --from git+https://github.com/juftin/spec-kit.git
 ```
 
 ### Option B: Run On-the-Fly with `uvx` (No Permanent Install Needed)
+
 Any `specify <subcommand>` can be run without prior installation by prefixing with:
+
 ```bash
 uvx --from git+https://github.com/juftin/spec-kit.git specify <subcommand>
 ```
 
 ### Option C: Install Locally (Development / Editable)
+
 ```bash
 git clone https://github.com/juftin/spec-kit.git
 cd spec-kit
@@ -43,9 +48,11 @@ uv tool install --editable .
 ```
 
 ### Option D: Install Agent Skills Globally via `npx skills`
+
 ```bash
 npx skills add juftin/spec-kit -g
 ```
+
 Installs `/speckit` and `/speckit-*` skills globally into your coding agent (Claude Code, Cursor, GitHub Copilot, etc.).
 
 ---
@@ -56,9 +63,9 @@ Installs `/speckit` and `/speckit-*` skills globally into your coding agent (Cla
 
 | Command | Description |
 | --- | --- |
-| `specify init [PATH] --integration <agent>` | Initialize a project in clean zero-footprint mode (`--bare` is default). Writes `.specify/init-options.json` and agent skills without copying internal scripts or templates. |
+| `specify init [PATH] --integration <agent>` | Initialize a project in bare mode (`--bare` is default). Writes `.specify/init-options.json` and agent skills without copying internal scripts or templates. |
 | `specify init . --integration copilot` | Initialize Spec Kit in the current directory (`--here`). |
-| `specify init . --scaffold --script sh` | Legacy scaffold mode: copies `.specify/scripts/` and `.specify/templates/` into the repo. |
+| `specify init . --scaffold --script sh` | Legacy scaffold mode: copies helper scripts and templates into the repo. |
 | `specify check` | Check that required developer and agent tools are installed. |
 | `specify version [--json]` | Print the installed Specify CLI version and runtime info. |
 
@@ -70,7 +77,7 @@ Installs `/speckit` and `/speckit-*` skills globally into your coding agent (Cla
 | `specify feature current [--json]` | Print the currently active feature directory from `.specify/feature.json`. |
 | `specify feature check [--json] [OPTIONS]` | Validate feature prerequisites and return `FEATURE_DIR` and `AVAILABLE_DOCS`. Flags: `--paths-only`, `--require-spec`, `--require-tasks`, `--include-tasks`, `--template <name>`. |
 | `specify plan setup [--json]` | Preflight `spec.md` in the active feature directory, idempotently create `plan.md` from `plan-template`, and output `FEATURE_DIR`, `FEATURE_SPEC`, `IMPL_PLAN`, and `BRANCH`. |
-| `specify tasks setup [--json]` | Preflight `plan.md` in the active feature directory, idempotently create `tasks.md` from `tasks-template`, and output `FEATURE_DIR`, `IMPL_PLAN`, `TASKS_FILE`, `AVAILABLE_DOCS`, and `TASKS_TEMPLATE_CONTENT`. |
+| `specify tasks setup [--json]` | Require `spec.md` and `plan.md` in the active feature directory, leave writing `tasks.md` to the agent, and output `FEATURE_DIR`, `IMPL_PLAN`, `TASKS_FILE`, `AVAILABLE_DOCS`, and `TASKS_TEMPLATE_CONTENT`. |
 | `specify template <name> [--json]` | Resolve and output any template (`spec-template`, `plan-template`, `tasks-template`, `checklist-template`, `constitution-template`) in memory across project overrides, presets, extensions, and core pack. |
 
 ### Integrations, Extensions, Presets & Workflows

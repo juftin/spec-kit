@@ -123,6 +123,14 @@ def list_workflows(request: WorkflowListRequest) -> WorkflowListResult:
             "workflow_registry_read_failed", f"Failed to read workflow registry: {exc}"
         ) from exc
 
+    from ._bundled import bundled_workflow
+    bundled = bundled_workflow(root, "speckit")
+    if bundled is not None and "speckit" not in installed:
+        from .engine import WorkflowDefinition
+        definition = WorkflowDefinition.from_yaml(bundled / "workflow.yml")
+        installed["speckit"] = {"name": definition.name, "version": definition.version,
+                                "description": definition.description, "enabled": True}
+
     items: list[WorkflowListEntry | WorkflowListWarning] = []
     selected = installed.items() if limit is None else islice(installed.items(), limit)
     for workflow_id, metadata in selected:

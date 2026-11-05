@@ -405,7 +405,7 @@ class TestUnknownCurrent:
         assert result.exit_code == 2
         out = strip_ansi(result.output)
         assert "Could not determine the previous version" in out
-        assert "https://github.com/github/spec-kit/releases" in out
+        assert "https://github.com/juftin/spec-kit/releases" in out
 
 
 class TestTokenScrubbing:

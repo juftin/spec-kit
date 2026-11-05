@@ -543,9 +543,12 @@ class CommandRegistrar:
         if scripts:
             from specify_cli.integrations.base import IntegrationBase
 
-            script_variant = IntegrationBase.select_script_variant(
-                script_variant, scripts
-            )
+            if init_opts.get("footprint") == "bare":
+                cli_command = IntegrationBase.resolve_bare_script_command(scripts)
+                if cli_command:
+                    scripts = {**scripts, "cli": cli_command}
+                    script_variant = "cli"
+            script_variant = IntegrationBase.select_script_variant(script_variant, scripts)
 
         script_command = scripts.get(script_variant) if script_variant else None
         if script_command:

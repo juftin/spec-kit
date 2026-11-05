@@ -1,17 +1,13 @@
 ---
-name: "speckit-tasks"
-description: "Generate an actionable, dependency-ordered tasks.md for the feature based on available design artifacts."
-argument-hint: "Optional task generation constraints"
-compatibility: "Works with specify CLI (uv tool install specify-cli --from git+https://github.com/juftin/spec-kit.git or uvx)"
+name: speckit-tasks
+description: Generate an actionable, dependency-ordered tasks.md for the feature based on available design artifacts.
+compatibility: Requires specify CLI; supports bare projects and global use
 metadata:
-  author: "github-spec-kit"
-  source: "templates/commands/tasks.md"
-user-invocable: true
-disable-model-invocation: false
+  author: github-spec-kit
+  source: templates/commands/tasks.md
 ---
 
-
-> **Specify CLI Execution**: When running `specify ...` commands below, if `specify` is not installed on `PATH`, either install it globally with `uv tool install specify-cli --from git+https://github.com/juftin/spec-kit.git` or prefix the command with `uvx --from git+https://github.com/juftin/spec-kit.git ` (e.g. `uvx --from git+https://github.com/juftin/spec-kit.git specify ...`). All feature specifications live in `docs/specs/<NNN>-<feature-name>/` by default (with fallback to `specs/` if already present). See the `speckit` skill for the full `specify` CLI reference.
+> **Specify CLI Execution**: Install with `uv tool install specify-cli --from git+https://github.com/juftin/spec-kit.git` or run commands with `uvx --from git+https://github.com/juftin/spec-kit.git specify ...`. Features default to `docs/specs/`, with a fallback to existing `specs/`.
 
 ## User Input
 
@@ -24,6 +20,7 @@ You **MUST** consider the user input before proceeding (if not empty).
 ## Pre-Execution Checks
 
 **Check for extension hooks (before tasks generation)**:
+
 - Check if `.specify/extensions.yml` exists in the project root.
 - If it exists, read it and look for entries under the `hooks.before_tasks` key
 - If the YAML cannot be parsed or is invalid, do not skip silently: tell the user that `.specify/extensions.yml` could not be read (include the parser error) and that no hooks were checked, including any mandatory (`optional: false`) hooks registered there, then continue normally
@@ -31,10 +28,10 @@ You **MUST** consider the user input before proceeding (if not empty).
 - For each remaining hook, do **not** attempt to interpret or evaluate hook `condition` expressions:
   - If the hook has no `condition` field, or it is null/empty, treat the hook as executable
   - If the hook defines a non-empty `condition`, skip the hook and leave condition evaluation to the HookExecutor implementation
-- When constructing command invocations from hook command names, replace dots (`.`) with hyphens (`-`). For example, `speckit.git.commit` → `/speckit-git-commit`.
 - For each executable hook, output the following based on its `optional` flag:
   - **Optional hook** (`optional: true`):
-    ```
+
+    ```text
     ## Extension Hooks
 
     **Optional Pre-Hook**: {extension}
@@ -44,8 +41,10 @@ You **MUST** consider the user input before proceeding (if not empty).
     Prompt: {prompt}
     To execute: `/{command}`
     ```
+
   - **Mandatory hook** (`optional: false`):
-    ```
+
+    ```text
     ## Extension Hooks
 
     **Automatic Pre-Hook**: {extension}
@@ -54,6 +53,7 @@ You **MUST** consider the user input before proceeding (if not empty).
 
     Wait for the result of the hook command before proceeding to the Outline.
     ```
+
     After emitting the block above you MUST actually invoke the hook and wait for it to finish before continuing. Run it the same way you would run the command yourself in this agent/session (the invocation may differ from the literal `{command}` id shown above, e.g. a skills-mode agent runs it as `/skill:speckit-...` or `$speckit-...`). Emitting the block alone does not run the hook.
 - If no hooks are registered or `.specify/extensions.yml` does not exist, skip silently
 
@@ -96,6 +96,7 @@ You **MUST** consider the user input before proceeding (if not empty).
 **You MUST complete this section before reporting completion to the user.**
 
 Check if `.specify/extensions.yml` exists in the project root.
+
 - If it does not exist, or no hooks are registered under `hooks.after_tasks`, skip to the Completion Report.
 - If it exists, read it and look for entries under the `hooks.after_tasks` key.
 - If the YAML cannot be parsed or is invalid, do not skip silently: tell the user that `.specify/extensions.yml` could not be read (include the parser error) and that no hooks were checked, including any mandatory (`optional: false`) hooks registered there, then continue to the Completion Report.
@@ -103,19 +104,21 @@ Check if `.specify/extensions.yml` exists in the project root.
 - For each remaining hook, do **not** attempt to interpret or evaluate hook `condition` expressions:
   - If the hook has no `condition` field, or it is null/empty, treat the hook as executable
   - If the hook defines a non-empty `condition`, skip the hook and leave condition evaluation to the HookExecutor implementation
-- When constructing command invocations from hook command names, replace dots (`.`) with hyphens (`-`). For example, `speckit.git.commit` → `/speckit-git-commit`.
 - For each executable hook, output the following based on its `optional` flag:
   - **Mandatory hook** (`optional: false`) — **You MUST emit `EXECUTE_COMMAND:` for each mandatory hook**:
-    ```
+
+    ```text
     ## Extension Hooks
 
     **Automatic Hook**: {extension}
     Executing: `/{command}`
     EXECUTE_COMMAND: {command}
     ```
+
     After emitting the block above you MUST actually invoke the hook and wait for it to finish before continuing. Run it the same way you would run the command yourself in this agent/session (the invocation may differ from the literal `{command}` id shown above, e.g. a skills-mode agent runs it as `/skill:speckit-...` or `$speckit-...`). Emitting the block alone does not run the hook.
   - **Optional hook** (`optional: true`):
-    ```
+
+    ```text
     ## Extension Hooks
 
     **Optional Hook**: {extension}
@@ -129,6 +132,7 @@ Check if `.specify/extensions.yml` exists in the project root.
 ## Completion Report
 
 Output path to generated tasks.md and summary:
+
 - Total task count
 - Task count per user story
 - Parallel opportunities identified

@@ -22,6 +22,12 @@ handoffs:
 After you have written the updated constitution above, perform a consistency propagation pass
 so the dependent artifacts reflect the amended principles:
 
+In bare mode (`.specify/init-options.json` has `footprint: bare`), missing
+`.specify/templates/*.md` files are expected. Read them using `specify template
+<name>` and create project overrides under `.specify/templates/overrides/` only
+when an amendment requires customization. Do not report absent scaffolds as sync
+errors or edit the installed package's templates.
+
 1. Read `.specify/templates/plan-template.md` and ensure any "Constitution Check" or rules align
    with the updated principles. Only materialize concrete gate text here if your team intends to
    review it as committed content; otherwise leave the runtime pointer
