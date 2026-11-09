@@ -58,5 +58,7 @@ docs/dev
 .github/prompts/
 .github/copilot-instructions.md
 .grok/
-.specify/
+.specify/*
+!.specify/memory/
+!.specify/init-options.json
 specs/
