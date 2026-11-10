@@ -89,14 +89,14 @@ Given that feature description, do this:
    1. If the user explicitly provided `SPECIFY_FEATURE_DIRECTORY` (e.g., via environment variable, argument, or configuration), use it as-is
    2. Otherwise, auto-generate it under `docs/specs/` (or `specs/` if existing):
       - Check `.specify/init-options.json` for `feature_numbering` (preferred) or `branch_numbering` (deprecated, migration only — will be removed in a future release)
-      - If `"timestamp"`: prefix is `YYYYMMDD-HHMMSS` (current timestamp)
-      - If `"sequential"` or absent: prefix is `NNN` (next available 3-digit number after scanning existing directories in the specs base dir)
-      - Construct the directory name: `<prefix>-<short-name>` (e.g., `003-user-auth` or `20260319-143022-user-auth`)
+      - If `"sequential"`: prefix is `NNN` (next available 3-digit number after scanning existing directories in the specs base dir)
+      - If `"timestamp"` or absent: prefix is `YYYYMMDD-HHMMSS` (current timestamp)
+      - Construct the directory name: `<prefix>-<short-name>` (e.g., `20260319-143022-user-auth` or `003-user-auth`)
       - Set `SPECIFY_FEATURE_DIRECTORY` to `docs/specs/<directory-name>` (or `specs/<directory-name>` if `specs/` already exists)
       - If `branch_numbering` was used (and `feature_numbering` was absent), emit a one-line warning: "⚠️ `branch_numbering` in init-options.json is deprecated. Rename to `feature_numbering`."
 
    **Create the directory and spec file**:
-   - **Recommended CLI shortcut**: When using sequential numbering without a custom `SPECIFY_FEATURE_DIRECTORY`, you can run `specify feature init <short-name> --json` (or `uvx --from git+https://github.com/juftin/spec-kit.git specify feature init <short-name> --json` if `specify` is not installed on `PATH`), which automatically allocates `docs/specs/<NNN>-<short-name>/`, renders `spec.md` from `spec-template`, and updates `.specify/feature.json`.
+   - **Recommended CLI shortcut**: When creating a feature without a custom `SPECIFY_FEATURE_DIRECTORY`, you can run `specify feature init <short-name> --json` (or `uvx --from git+https://github.com/juftin/spec-kit.git specify feature init <short-name> --json` if `specify` is not installed on `PATH`), which automatically allocates `docs/specs/<prefix>-<short-name>/`, renders `spec.md` from `spec-template`, and updates `.specify/feature.json`.
    - Or manually:
      - Run `specify template spec-template --json` from the repository root (if `specify` is not on `PATH`, prefix with `uvx --from git+https://github.com/juftin/spec-kit.git`) and parse `TEMPLATE_CONTENT` as the active `spec-template`. The shared resolver composes project overrides, preset layers, and extension layers over the core template, including `append`, `prepend`, and `wrap` strategies. If it fails, stop and report the resolution error; do not continue with only one contributing template layer.
      - `mkdir -p SPECIFY_FEATURE_DIRECTORY`

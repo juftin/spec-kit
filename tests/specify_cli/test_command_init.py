@@ -102,7 +102,7 @@ def test_reinit_preserves_feature_numbering(tmp_path: Path, monkeypatch, numberi
     project = tmp_path / "proj"
     options_path = project / ".specify" / "init-options.json"
     options = json.loads(options_path.read_text(encoding="utf-8"))
-    assert options["feature_numbering"] == "sequential"
+    assert options["feature_numbering"] == "timestamp"
     if numbering is None:
         options.pop("feature_numbering")
     else:
@@ -118,7 +118,7 @@ def test_reinit_preserves_feature_numbering(tmp_path: Path, monkeypatch, numberi
     ])
     assert result.exit_code == 0, _strip(result.stdout)
     updated = json.loads(options_path.read_text(encoding="utf-8"))
-    assert updated["feature_numbering"] == (numbering or "sequential")
+    assert updated["feature_numbering"] == (numbering or "timestamp")
     assert updated["custom_setting"] == "keep me"
     assert updated["here"] is True
 

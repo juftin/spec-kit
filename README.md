@@ -10,7 +10,7 @@ process, customize it, or bring your own.
 
 ## juftin/spec-kit
 
-This is a fork of [github/spec-kit](https://github.com/github/spec-kit) with two
+This is a fork of [github/spec-kit](https://github.com/github/spec-kit) with three
 changes to the default workflow:
 
 1. **Install skills globally, once.** Use the same Spec Kit skills across your
@@ -19,6 +19,11 @@ changes to the default workflow:
 2. **Keep specs with your documentation.** New features default to
    `docs/specs/<feature>/` instead of a root `specs/` directory. Existing projects
    with a root `specs/` directory continue to use it.
+3. **Number features with timestamps by default.** Features default to timestamp
+   prefixes (`YYYYMMDD-HHMMSS-<name>`) instead of sequential numbers (`001-`),
+   preventing collisions across branches and concurrent agents. Sequential
+   numbering remains available via `--sequential`, `--number <N>`, or
+   `feature_numbering: sequential` in `.specify/init-options.json`.
 
 Global installation adds no files to your repositories. When you use the skills,
 the workflow creates your constitution, feature artifacts, and lightweight

@@ -15,7 +15,7 @@ runner = CliRunner()
 @pytest.fixture
 def project(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    ops.feature_init("auth")
+    ops.feature_init("auth", number=1)
     return tmp_path
 
 
@@ -54,8 +54,18 @@ def test_creation_options_and_collision(project, monkeypatch):
     before = sorted(project.rglob("*"))
     ops.feature_init("preview", dry_run=True)
     assert sorted(project.rglob("*")) == before
+    with pytest.raises(ValueError, match="cannot be combined"):
+        ops.feature_init("bad", timestamp=True, sequential=True)
+    with pytest.raises(ValueError, match="cannot be combined"):
+        ops.feature_init("bad", number=1, sequential=True)
+    assert re.fullmatch(r"\d{8}-\d{6}", ops.feature_init("timed-default", dry_run=True)["feature_prefix"])
+    assert ops.feature_init("seq-flag", sequential=True, dry_run=True)["feature_prefix"] == "008"
     monkeypatch.setenv("SPECIFY_FEATURE_NO_PERSIST", "true")
     state = (project / ".specify/feature.json").read_bytes()
+    (project / ".specify/init-options.json").write_text(
+        '{"feature_numbering":"sequential"}'
+    )
+    assert ops.feature_init("seq-opt")["feature_prefix"] == "008"
     (project / ".specify/init-options.json").write_text(
         '{"feature_numbering":"timestamp"}'
     )
@@ -204,7 +214,7 @@ def test_explicit_projects_do_not_change_process_directory(tmp_path, monkeypatch
     roots = [tmp_path / "first", tmp_path / "second"]
     for root in roots:
         root.mkdir()
-        ops.feature_init(root.name, project_directory=root)
+        ops.feature_init(root.name, project_directory=root, number=1)
         ops.plan_setup(project_directory=root)
     from pathlib import Path
 

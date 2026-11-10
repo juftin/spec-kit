@@ -73,7 +73,7 @@ Installs `/speckit` and `/speckit-*` skills globally into your coding agent (Cla
 
 | Command | Description |
 | --- | --- |
-| `specify feature init <name> [--json]` | Create a new sequentially numbered feature directory `docs/specs/<NNN>-<name>/`, populate `spec.md` from the composed `spec-template`, and set `.specify/feature.json` to point to the active feature. |
+| `specify feature init <name> [--json]` | Create a new feature directory `docs/specs/<prefix>-<name>/` (defaulting to timestamp prefixes), populate `spec.md` from the composed `spec-template`, and set `.specify/feature.json` to point to the active feature. |
 | `specify feature current [--json]` | Print the currently active feature directory from `.specify/feature.json`. |
 | `specify feature check [--json] [OPTIONS]` | Validate feature prerequisites and return `FEATURE_DIR` and `AVAILABLE_DOCS`. Flags: `--paths-only`, `--require-spec`, `--require-tasks`, `--include-tasks`, `--template <name>`. |
 | `specify plan setup [--json]` | Preflight `spec.md` in the active feature directory, idempotently create `plan.md` from `plan-template`, and output `FEATURE_DIR`, `FEATURE_SPEC`, `IMPL_PLAN`, and `BRANCH`. |
@@ -97,7 +97,7 @@ Installs `/speckit` and `/speckit-*` skills globally into your coding agent (Cla
 Run these skills in your coding agent chat in order, reviewing each artifact under `docs/specs/<NNN>-<feature>/` before continuing:
 
 1. **`/speckit-constitution`** — Establish or update project governance principles in `.specify/memory/constitution.md` (resolved via `specify template constitution-template --json`).
-2. **`/speckit-specify <description>`** — Create `docs/specs/<NNN>-<feature>/spec.md` and `.specify/feature.json` (via `specify feature init <name> --json` or `specify template spec-template --json`).
+2. **`/speckit-specify <description>`** — Create `docs/specs/<prefix>-<feature>/spec.md` and `.specify/feature.json` (via `specify feature init <name> --json` or `specify template spec-template --json`).
 3. **`/speckit-clarify`** *(optional)* — Identify up to 5 high-impact underspecified areas in `spec.md` and encode answers directly into the spec (uses `specify feature check --json --paths-only`).
 4. **`/speckit-plan <tech stack / constraints>`** — Generate `plan.md`, `research.md`, `data-model.md`, `contracts/`, and `quickstart.md` in the active feature directory (uses `specify plan setup --json`).
 5. **`/speckit-checklist <domain>`** *(optional)* — Generate a requirements-quality checklist under `checklists/` (uses `specify feature check --json --template checklist-template`).
