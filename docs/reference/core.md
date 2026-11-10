@@ -203,5 +203,7 @@ from the working directory; `SPECIFY_INIT_DIR` takes precedence.
 `SPECIFY_FEATURE_DIRECTORY` overrides `.specify/feature.json`;
 `SPECIFY_FEATURE_NO_PERSIST=1` or `true` prevents activation writes, and
 `SPECIFY_FEATURE` overrides the reported branch. Features use `docs/specs/`
-unless a legacy root `specs/` already exists. Timestamp numbering may also be
-configured with `feature_numbering: timestamp` in `.specify/init-options.json`.
+unless a legacy root `specs/` already exists, and default to timestamp prefixes
+(`YYYYMMDD-HHMMSS-`). Sequential numbering may be configured with
+`feature_numbering: sequential` in `.specify/init-options.json` or requested
+with `--sequential` or `--number N`.

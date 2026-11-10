@@ -87,6 +87,7 @@ def feature_init(
     *,
     project_directory: Path | None = None,
     timestamp: bool = False,
+    sequential: bool = False,
     number: int | None = None,
     short_name: str | None = None,
     dry_run: bool = False,
@@ -110,11 +111,14 @@ def feature_init(
         raise ValueError("Feature number must be between 0 and 9223372036854775807")
     if timestamp and number is not None:
         raise ValueError("--timestamp and --number cannot be combined")
+    if sequential and timestamp:
+        raise ValueError("--timestamp and --sequential cannot be combined")
+    if sequential and number is not None:
+        raise ValueError("--sequential and --number cannot be combined")
+    numbering = options.get("feature_numbering") or options.get("branch_numbering")
     if number is not None:
         prefix = f"{number:03d}"
-    elif timestamp or options.get("feature_numbering") == "timestamp":
-        prefix = datetime.now().strftime("%Y%m%d-%H%M%S")
-    else:
+    elif not timestamp and (sequential or numbering == "sequential"):
         numbers = (
             [
                 int(m.group(1))
@@ -127,6 +131,8 @@ def feature_init(
             else []
         )
         prefix = f"{max(numbers, default=0) + 1:03d}"
+    else:
+        prefix = datetime.now().strftime("%Y%m%d-%H%M%S")
     if prefix.isdigit() and int(prefix) > 9223372036854775807:
         raise ValueError("Feature number must be between 0 and 9223372036854775807")
     slug = (

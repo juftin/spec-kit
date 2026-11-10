@@ -14,13 +14,14 @@ def feature_init(
     name: str = typer.Argument(..., help="Feature description."),
     json_output: bool = typer.Option(False, "--json"),
     timestamp: bool = typer.Option(False, "--timestamp"),
+    sequential: bool = typer.Option(False, "--sequential"),
     number: int | None = typer.Option(None, "--number"),
     short_name: str | None = typer.Option(None, "--short-name"),
     dry_run: bool = typer.Option(False, "--dry-run"),
     allow_existing_branch: bool = typer.Option(False, "--allow-existing-branch"),
 ) -> None:
     invoke(operations.feature_init, json_output, name=name, timestamp=timestamp,
-           number=number, short_name=short_name, dry_run=dry_run,
+           sequential=sequential, number=number, short_name=short_name, dry_run=dry_run,
            allow_existing_branch=allow_existing_branch)
 
 

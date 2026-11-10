@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -14,22 +15,22 @@ runner = CliRunner()
 
 
 def test_feature_init_defaults_to_docs_specs(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    """When specs/ does not exist, feature init creates docs/specs/001-<name>."""
+    """When specs/ does not exist, feature init creates docs/specs/<timestamp>-<name>."""
     monkeypatch.chdir(tmp_path)
     result = runner.invoke(app, ["feature", "init", "user-auth"])
     assert result.exit_code == 0
 
-    feature_dir = tmp_path / "docs" / "specs" / "001-user-auth"
+    feature_json = tmp_path / ".specify" / "feature.json"
+    assert feature_json.is_file()
+    data = json.loads(feature_json.read_text(encoding="utf-8"))
+    assert re.match(r"^docs/specs/\d{8}-\d{6}-user-auth$", data["feature_directory"])
+
+    feature_dir = tmp_path / data["feature_directory"]
     assert feature_dir.is_dir()
 
     spec_file = feature_dir / "spec.md"
     assert spec_file.is_file()
     assert "# Feature Specification:" in spec_file.read_text(encoding="utf-8")
-
-    feature_json = tmp_path / ".specify" / "feature.json"
-    assert feature_json.is_file()
-    data = json.loads(feature_json.read_text(encoding="utf-8"))
-    assert data["feature_directory"] == "docs/specs/001-user-auth"
 
 
 def test_feature_init_uses_specs_if_present(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
@@ -41,30 +42,29 @@ def test_feature_init_uses_specs_if_present(tmp_path: Path, monkeypatch: pytest.
     result = runner.invoke(app, ["feature", "init", "billing-portal"])
     assert result.exit_code == 0
 
-    feature_dir = tmp_path / "specs" / "001-billing-portal"
+    data = json.loads((tmp_path / ".specify" / "feature.json").read_text(encoding="utf-8"))
+    assert re.match(r"^specs/\d{8}-\d{6}-billing-portal$", data["feature_directory"])
+    feature_dir = tmp_path / data["feature_directory"]
     assert feature_dir.is_dir()
     assert (feature_dir / "spec.md").is_file()
 
-    data = json.loads((tmp_path / ".specify" / "feature.json").read_text(encoding="utf-8"))
-    assert data["feature_directory"] == "specs/001-billing-portal"
-
 
 def test_feature_init_sequential_prefixes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    """feature init increments sequential 3-digit prefixes."""
+    """feature init with --sequential increments sequential 3-digit prefixes."""
     monkeypatch.chdir(tmp_path)
 
     # First feature: 001
-    res1 = runner.invoke(app, ["feature", "init", "first-feature"])
+    res1 = runner.invoke(app, ["feature", "init", "first-feature", "--sequential"])
     assert res1.exit_code == 0
     assert (tmp_path / "docs" / "specs" / "001-first-feature").is_dir()
 
     # Second feature: 002
-    res2 = runner.invoke(app, ["feature", "init", "second-feature"])
+    res2 = runner.invoke(app, ["feature", "init", "second-feature", "--sequential"])
     assert res2.exit_code == 0
     assert (tmp_path / "docs" / "specs" / "002-second-feature").is_dir()
 
     # Third feature: 003
-    res3 = runner.invoke(app, ["feature", "init", "third-feature"])
+    res3 = runner.invoke(app, ["feature", "init", "third-feature", "--sequential"])
     assert res3.exit_code == 0
     assert (tmp_path / "docs" / "specs" / "003-third-feature").is_dir()
 
@@ -82,7 +82,7 @@ def test_feature_init_ignores_timestamp_dirs(tmp_path: Path, monkeypatch: pytest
     (specs_dir / "001-existing-feature").mkdir()
 
     monkeypatch.chdir(tmp_path)
-    result = runner.invoke(app, ["feature", "init", "new-feature"])
+    result = runner.invoke(app, ["feature", "init", "new-feature", "--sequential"])
     assert result.exit_code == 0
     assert (specs_dir / "002-new-feature").is_dir()
 
@@ -93,10 +93,10 @@ def test_feature_init_json_output(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
     result = runner.invoke(app, ["feature", "init", "oauth-login", "--json"])
     assert result.exit_code == 0
     data = json.loads(result.output)
-    assert data["feature_prefix"] == "001"
+    assert re.match(r"^\d{8}-\d{6}$", data["feature_prefix"])
     assert data["feature_name"] == "oauth-login"
-    assert data["feature_directory"] == "docs/specs/001-oauth-login"
-    assert data["spec_file"] == "docs/specs/001-oauth-login/spec.md"
+    assert data["feature_directory"] == f"docs/specs/{data['feature_prefix']}-oauth-login"
+    assert data["spec_file"] == f"docs/specs/{data['feature_prefix']}-oauth-login/spec.md"
 
 
 def test_feature_init_invalid_name(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
@@ -122,7 +122,7 @@ def test_feature_current_json_output(tmp_path: Path, monkeypatch: pytest.MonkeyP
     result = runner.invoke(app, ["feature", "current", "--json"])
     assert result.exit_code == 0
     data = json.loads(result.output)
-    assert data["feature_directory"] == "docs/specs/001-analytics"
+    assert re.match(r"^docs/specs/\d{8}-\d{6}-analytics$", data["feature_directory"])
 
 
 def test_feature_check_paths_only(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
@@ -132,9 +132,9 @@ def test_feature_check_paths_only(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
     result = runner.invoke(app, ["feature", "check", "--json", "--paths-only"])
     assert result.exit_code == 0
     data = json.loads(result.output)
-    assert data["BRANCH"] == "001-search-api"
-    assert data["FEATURE_DIR"].endswith("docs/specs/001-search-api")
-    assert data["FEATURE_SPEC"].endswith("docs/specs/001-search-api/spec.md")
+    assert re.match(r"^\d{8}-\d{6}-search-api$", data["BRANCH"])
+    assert data["FEATURE_DIR"].endswith(data["BRANCH"])
+    assert data["FEATURE_SPEC"].endswith(f"{data['BRANCH']}/spec.md")
 
 
 def test_feature_check_prerequisites_and_template(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
@@ -146,10 +146,14 @@ def test_feature_check_prerequisites_and_template(tmp_path: Path, monkeypatch: p
     res_no_plan = runner.invoke(app, ["feature", "check", "--json"])
     assert res_no_plan.exit_code == 1
 
+    feature_dir = tmp_path / json.loads(
+        (tmp_path / ".specify" / "feature.json").read_text(encoding="utf-8")
+    )["feature_directory"]
+
     # Set up the plan; the agent writes the generated tasks
     runner.invoke(app, ["plan", "setup"])
     runner.invoke(app, ["tasks", "setup"])
-    (tmp_path / "docs/specs/001-search-api/tasks.md").write_text("# Generated tasks\n")
+    (feature_dir / "tasks.md").write_text("# Generated tasks\n")
 
     res_ok = runner.invoke(
         app,
